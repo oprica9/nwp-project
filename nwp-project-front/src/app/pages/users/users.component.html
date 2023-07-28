@@ -1,0 +1,46 @@
+<div class="container mt-5">
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <!-- Table headers remain the same -->
+      <thead>
+      <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+        <th>Permissions</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      <!-- Table rows remain the same -->
+      <tr
+        *ngFor="let user of users | paginate: { id: 'users', itemsPerPage: size, currentPage: page, totalItems: totalUsers }"
+        [ngClass]="{'clickable-row': canUpdateUsers()}"
+        (click)="handleRowClick(user.id)"
+        (mousedown)="onMouseDown()"
+        (mouseup)="onMouseUp()"
+        (mousemove)="onMouseMove()"
+      >
+        <td>{{user.firstName}}</td>
+        <td>{{user.lastName}}</td>
+        <td>
+          <a *ngIf="canUpdateUsers()" href="mailto:{{user.email}}" (click)="$event.stopPropagation()" class="email-link">
+            {{user.email}}
+          </a>
+          <span *ngIf="!canUpdateUsers()" class="disabled-link">
+              {{user.email}}
+            </span>
+        </td>
+        <td>{{getPermissions(user.permissions)}}</td>
+        <td>
+          <button class="btn btn-danger" *ngIf="userCanDelete()" (click)="$event.stopPropagation(); onDeleteClick(user.id)">
+            Delete
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Pagination controls are placed outside the table-responsive container -->
+  <pagination-controls id="users" (pageChange)="pageChanged($event)"></pagination-controls>
+</div>

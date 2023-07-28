@@ -1,0 +1,22 @@
+<div class="vh-100 d-flex justify-content-center align-items-center">
+  <div class="col-8 col-sm-6 col-md-4 col-lg-2">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title text-center">Login</h5>
+        <form>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input [(ngModel)]="email" name="email" type="email" class="form-control" id="email" placeholder="name@example.com">
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input [(ngModel)]="password" name="password" type="password" class="form-control" id="password" placeholder="Password">
+          </div>
+          <div class="d-grid">
+            <button (click)="login()" class="btn btn-primary" type="button">Login</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

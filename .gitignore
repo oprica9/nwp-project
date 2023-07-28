@@ -1,0 +1,80 @@
+# Node.js and npm
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Compiled output
+/dist/
+/dist-server/
+
+# Dependency lock files
+yarn.lock
+package-lock.json
+
+# Environment files (contains sensitive information)
+/src/environments/*.js
+/src/environments/*.js.map
+
+# IDE-specific files (Visual Studio Code, WebStorm, etc.)
+.vscode/
+.idea/
+
+# Cache and log files
+.cache/
+log/
+
+# Miscellaneous
+Thumbs.db
+.DS_Store
+
+# Compiled output
+/target/
+/bin/
+/out/
+/build/
+
+# Gradle
+.gradle/
+build.gradle.lock
+
+# Maven
+.mvn/
+pom.xml.lock
+
+# IDE-specific files (Eclipse, IntelliJ, etc.)
+.classpath
+.project
+.settings/
+*.iml
+
+# Spring Boot application properties files
+/application*.yml
+/application*.properties
+
+# IDE generated files
+.springBeans
+.idea/workspace.xml
+.idea/tasks.xml
+
+# Cache and log files
+logs/
+*.log
+*.log.*
+*.tmp
+hs_err_pid*
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Database files
+*.db
+*.h2.db
+*.hsql.db
+*.lck
+
+# Other
+.DS_Store
+Thumbs.db
+
