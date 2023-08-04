@@ -1,8 +1,11 @@
 package com.raf.rs.nwp.runner;
 
+import com.raf.rs.nwp.model.Machine;
 import com.raf.rs.nwp.model.Permission;
 import com.raf.rs.nwp.model.User;
 import com.raf.rs.nwp.model.UserPermission;
+import com.raf.rs.nwp.model.enums.MachineStatus;
+import com.raf.rs.nwp.repository.MachineRepository;
 import com.raf.rs.nwp.repository.PermissionRepository;
 import com.raf.rs.nwp.repository.UserPermissionRepository;
 import com.raf.rs.nwp.repository.UserRepository;
@@ -20,26 +23,51 @@ public class DataLoader {
     private final UserPermissionRepository userPermissionRepository;
     private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MachineRepository machineRepository;
 
     @Bean
     public CommandLineRunner initData() {
         return (args) -> {
             // Create permissions
-            Permission writePermission = new Permission();
-            writePermission.setName("can_create_users");
-            permissionRepository.save(writePermission);
+            Permission can_create_users = new Permission();
+            can_create_users.setName("can_create_users");
+            permissionRepository.save(can_create_users);
 
-            Permission readPermission = new Permission();
-            readPermission.setName("can_read_users");
-            permissionRepository.save(readPermission);
+            Permission can_read_users = new Permission();
+            can_read_users.setName("can_read_users");
+            permissionRepository.save(can_read_users);
 
-            Permission updatePermission = new Permission();
-            updatePermission.setName("can_update_users");
-            permissionRepository.save(updatePermission);
+            Permission can_update_users = new Permission();
+            can_update_users.setName("can_update_users");
+            permissionRepository.save(can_update_users);
 
-            Permission deletePermission = new Permission();
-            deletePermission.setName("can_delete_users");
-            permissionRepository.save(deletePermission);
+            Permission can_delete_users = new Permission();
+            can_delete_users.setName("can_delete_users");
+            permissionRepository.save(can_delete_users);
+
+            Permission can_search_machines = new Permission();
+            can_search_machines.setName("can_search_machines");
+            permissionRepository.save(can_search_machines);
+
+            Permission can_start_machines = new Permission();
+            can_start_machines.setName("can_start_machines");
+            permissionRepository.save(can_start_machines);
+
+            Permission can_stop_machines = new Permission();
+            can_stop_machines.setName("can_stop_machines");
+            permissionRepository.save(can_stop_machines);
+
+            Permission can_restart_machines = new Permission();
+            can_restart_machines.setName("can_restart_machines");
+            permissionRepository.save(can_restart_machines);
+
+            Permission can_create_machines = new Permission();
+            can_create_machines.setName("can_create_machines");
+            permissionRepository.save(can_create_machines);
+
+            Permission can_destroy_machines = new Permission();
+            can_destroy_machines.setName("can_destroy_machines");
+            permissionRepository.save(can_destroy_machines);
 
             // Create users
             User user1 = new User();
@@ -49,10 +77,16 @@ public class DataLoader {
             user1.setLastName("Admin");
             userRepository.save(user1);
 
-            addPermissionToUser(user1, writePermission);
-            addPermissionToUser(user1, readPermission);
-            addPermissionToUser(user1, updatePermission);
-            addPermissionToUser(user1, deletePermission);
+            addPermissionToUser(user1, can_create_users);
+            addPermissionToUser(user1, can_read_users);
+            addPermissionToUser(user1, can_update_users);
+            addPermissionToUser(user1, can_delete_users);
+            addPermissionToUser(user1, can_search_machines);
+            addPermissionToUser(user1, can_start_machines);
+            addPermissionToUser(user1, can_stop_machines);
+            addPermissionToUser(user1, can_restart_machines);
+            addPermissionToUser(user1, can_create_machines);
+            addPermissionToUser(user1, can_destroy_machines);
 
             User user2 = new User();
             user2.setEmail("user@gmail.com");
@@ -61,8 +95,8 @@ public class DataLoader {
             user2.setLastName("User");
             userRepository.save(user2);
 
-            addPermissionToUser(user2, writePermission);
-            addPermissionToUser(user2, readPermission);
+            addPermissionToUser(user2, can_create_users);
+            addPermissionToUser(user2, can_read_users);
 
             // Testing purposes
             createNUsersWithoutPermissions(20);
@@ -71,7 +105,7 @@ public class DataLoader {
     }
 
     private void createNUsersWithoutPermissions(int n) {
-        for(int i = 1; i <= n; i++) {
+        for (int i = 1; i <= n; i++) {
             User user = new User();
             user.setEmail("user" + i + "@gmail.com");
             user.setPassword(passwordEncoder.encode("password" + i));

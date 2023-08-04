@@ -30,13 +30,23 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.5'
 	implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.15.2'
-	testImplementation 'junit:junit:4.13.1'
+
+	implementation 'org.springframework:spring-websocket:5.3.10'
+	implementation 'org.springframework:spring-messaging:5.3.10'
+	implementation 'javax.websocket:javax.websocket-api:1.1'
+	compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.5'
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.5'
 	runtimeOnly 'com.h2database:h2'
 	//runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
+	testImplementation 'javax.websocket:javax.websocket-api:1.1'
+	testImplementation 'junit:junit:4.13.2'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 }

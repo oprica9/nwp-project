@@ -51,6 +51,15 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/api/users/*", "PUT")).hasAuthority("can_update_users")
                 .requestMatchers(new AntPathRequestMatcher("/api/users/*", "DELETE")).hasAuthority("can_delete_users")
                 .requestMatchers(new AntPathRequestMatcher("/api/permissions", "GET")).hasAnyAuthority("can_update_users", "can_create_users")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines", "GET")).hasAuthority("can_search_machines")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines/start/*", "POST")).hasAuthority("can_start_machines")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines/stop/*", "POST")).hasAuthority("can_stop_machines")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines/restart/*", "POST")).hasAuthority("can_restart_machines")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines/*/schedule-start", "POST")).hasAuthority("can_start_machines")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines/*/schedule-stop", "POST")).hasAuthority("can_stop_machines")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines/*/schedule-restart", "POST")).hasAuthority("can_restart_machines")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines/create", "POST")).hasAuthority("can_create_machines")
+                .requestMatchers(new AntPathRequestMatcher("/api/machines/*", "DELETE")).hasAuthority("can_destroy_machines")
                 .anyRequest().authenticated()
         );
 

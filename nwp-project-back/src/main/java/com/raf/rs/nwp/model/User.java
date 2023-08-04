@@ -50,4 +50,8 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private Set<UserPermission> userPermissions = new HashSet<>();
 
+    @JsonManagedReference
+    @OneToMany(mappedBy = "createdBy")
+    private Set<Machine> machines = new HashSet<>();
+
 }

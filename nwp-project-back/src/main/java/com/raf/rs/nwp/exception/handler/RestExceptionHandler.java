@@ -1,6 +1,7 @@
 package com.raf.rs.nwp.exception.handler;
 
 import com.raf.rs.nwp.dto.api_response.ApiErrorResponse;
+import com.raf.rs.nwp.exception.exceptions.MachineStatusException;
 import com.raf.rs.nwp.exception.exceptions.ResourceAlreadyExistsException;
 import com.raf.rs.nwp.exception.exceptions.ResourceNotFoundException;
 import com.raf.rs.nwp.exception.exceptions.TokenExpiredException;
@@ -60,6 +61,15 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 ZonedDateTime.now(),
                 ex.getMessage(),
                 ErrorCode.TOKEN_EXPIRED);
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(MachineStatusException.class)
+    protected ResponseEntity<ApiErrorResponse> handleMachineStatusException(MachineStatusException ex) {
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                ZonedDateTime.now(),
+                ex.getMessage(),
+                ErrorCode.MACHINE_STATUS);
         return new ResponseEntity<>(apiErrorResponse, HttpStatus.CONFLICT);
     }
 
