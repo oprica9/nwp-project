@@ -1,8 +1,10 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {User, ApiResponse, Page, Permission, UserUpdateDTO} from '../../model/user';
+import {User, Permission, UserUpdateDTO} from '../../model/user';
 import {API_ENDPOINTS} from '../../constants';
+import {ApiResponse} from "../../model/api-response";
+import {Page} from "../../model/page";
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +14,8 @@ export class UserService {
   constructor(private http: HttpClient) {
   }
 
-  fetchUsers(page: number = 0, size: number = 10): Observable<ApiResponse<Page>> {
-    return this.http.get<ApiResponse<Page>>(`${API_ENDPOINTS.USERS}?page=${page}&size=${size}`);
+  fetchUsers(page: number = 0, size: number = 10): Observable<ApiResponse<Page<User>>> {
+    return this.http.get<ApiResponse<Page<User>>>(`${API_ENDPOINTS.USERS}?page=${page}&size=${size}`);
   }
 
   getUserById(id: number): Observable<ApiResponse<User>> {

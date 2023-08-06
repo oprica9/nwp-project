@@ -22,35 +22,6 @@ export interface Sort {
   unsorted: boolean;
 }
 
-export interface Pageable {
-  sort: Sort;
-  offset: number;
-  pageNumber: number;
-  pageSize: number;
-  paged: boolean;
-  unpaged: boolean;
-}
-
-export interface Page {
-  content: User[];
-  pageable: Pageable;
-  last: boolean;
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  sort: Sort;
-  first: boolean;
-  numberOfElements: number;
-  empty: boolean;
-}
-
-export interface ApiResponse<T> {
-  timestamp: string;
-  status: string;
-  data: T;
-}
-
 export interface PermissionDTO {
   name: string;
   // Other properties...

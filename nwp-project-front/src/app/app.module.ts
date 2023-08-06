@@ -17,6 +17,9 @@ import {HTTP_INTERCEPTORS} from '@angular/common/http';
 import {AuthInterceptor} from './interceptors/auth.interceptor';
 import {NgxPaginationModule} from 'ngx-pagination';
 import { HomeComponent } from './pages/home/home.component';
+import { MachineSearchComponent } from './pages/machine-search/machine-search.component';
+import { MachineCreateComponent } from './pages/create-machine/machine-create.component';
+import { MachineErrorsComponent } from './pages/machine-errors/machine-errors.component';
 
 
 @NgModule({
@@ -27,7 +30,10 @@ import { HomeComponent } from './pages/home/home.component';
     AddUserComponent,
     EditUserComponent,
     NavbarComponent,
-    HomeComponent
+    HomeComponent,
+    MachineSearchComponent,
+    MachineCreateComponent,
+    MachineErrorsComponent
   ],
   imports: [
     BrowserModule,

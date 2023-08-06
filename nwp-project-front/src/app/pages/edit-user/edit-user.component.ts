@@ -18,7 +18,7 @@ export class EditUserComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   user: User = {} as User;
   availablePermissions: Permission[] = [];
-  private ngUnsubscribe = new Subject();
+  private ngUnsubscribe = new Subject<void>();
 
   constructor(
     private userService: UserService,

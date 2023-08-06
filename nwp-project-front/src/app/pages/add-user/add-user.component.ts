@@ -16,7 +16,7 @@ export class AddUserComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   availablePermissions: Permission[] = [];
   permissionNames: string[] = [];
-  private ngUnsubscribe = new Subject();
+  private ngUnsubscribe = new Subject<void>();
 
   constructor(
     private userService: UserService,

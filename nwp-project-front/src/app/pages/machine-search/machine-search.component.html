@@ -1,0 +1,62 @@
+<div class="container mt-5">
+  <form [formGroup]="form" (ngSubmit)="searchMachines()" class="mt-4">
+
+    <div class="form-group">
+      <label for="machine-name">Name</label>
+      <input type="text" id="machine-name" class="form-control" formControlName="name">
+    </div>
+
+    <div class="form-group">
+      <label>Status:</label>
+      <div *ngFor="let status of availableStatuses" class="form-check">
+        <input type="checkbox" id="permission{{status}}" formControlName="{{status}}" class="form-check-input">
+        <label for="permission{{status}}" class="form-check-label">{{ status }}</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="date-from">Date From</label>
+      <input type="datetime-local" id="date-from" class="form-control" formControlName="dateFrom">
+    </div>
+
+    <div class="form-group">
+      <label for="date-to">Date To</label>
+      <input type="datetime-local" id="date-to" class="form-control" formControlName="dateTo">
+    </div>
+
+    <div class="form-group">
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+
+  </form>
+  <div class="container mt-5">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <!-- Table headers remain the same -->
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Created By</th>
+          <th>Active</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Table rows remain the same -->
+        <tr
+          *ngFor="let machine of machines | paginate: { id: 'machines', itemsPerPage: size, currentPage: page, totalItems: totalMachines }"
+        >
+          <td>{{machine.name}}</td>
+          <td>{{machine.status}}</td>
+          <td>{{machine.createdBy}}</td>
+          <td>{{machine.active}}</td>
+
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination controls are placed outside the table-responsive container -->
+    <pagination-controls id="users" (pageChange)="pageChanged($event)"></pagination-controls>
+  </div>
+</div>

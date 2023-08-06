@@ -1,0 +1,30 @@
+<div class="container mt-5">
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <!-- Table headers remain the same -->
+      <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Machine Id</th>
+        <th>Operation Failure</th>
+        <th>Error Message</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      <!-- Table rows remain the same -->
+      <tr
+        *ngFor="let error of errors | paginate: { id: 'errors', itemsPerPage: size, currentPage: page, totalItems: totalErrors }"
+      >
+        <td>{{error.timestamp}}</td>
+        <td>{{error.machineId}}</td>
+        <td>{{error.operation}}</td>
+        <td>{{error.errorMessage}}</td>
+
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Pagination controls are placed outside the table-responsive container -->
+  <pagination-controls id="users" (pageChange)="pageChanged($event)"></pagination-controls>
+</div>

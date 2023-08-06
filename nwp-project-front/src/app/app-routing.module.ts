@@ -8,7 +8,9 @@ import {AuthGuard} from "./guards/auth.guard";
 import {LoginGuard} from "./guards/login.guard";
 import {PermissionGuard} from './guards/permission.guard';
 import {HomeComponent} from "./pages/home/home.component";
-
+import {MachineSearchComponent} from './pages/machine-search/machine-search.component';
+import {MachineCreateComponent} from "./pages/create-machine/machine-create.component";
+import {MachineErrorsComponent} from "./pages/machine-errors/machine-errors.component";
 
 const routes: Routes = [
   {path: '', component: HomeComponent, canActivate: [AuthGuard]},
@@ -30,6 +32,24 @@ const routes: Routes = [
     component: EditUserComponent,
     canActivate: [AuthGuard, PermissionGuard],
     data: {requiredPermission: 'can_update_users'}
+  },
+  {
+    path: 'machine-search',
+    component: MachineSearchComponent,
+    canActivate: [AuthGuard]
+  },
+  {path: 'search-machines', component: MachineSearchComponent, canActivate: [AuthGuard]},
+  {
+    path: 'machine-create',
+    component: MachineCreateComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {requiredPermission: 'can_create_machines'}
+  },
+  {
+    path: 'machine-errors',
+    component: MachineErrorsComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {requiredPermission: 'can_create_machines'}
   },
   {path: '**', redirectTo: '/'}
 ];

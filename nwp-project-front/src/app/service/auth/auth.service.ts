@@ -3,12 +3,13 @@ import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {BehaviorSubject, Observable, throwError} from 'rxjs';
 import {LoginRequest} from "../../model/login-request";
 import {AuthenticationResponseDTO} from "../../model/authentication-response-dto";
-import {ApiResponse, AuthUser} from "../../model/user";
+import {AuthUser} from "../../model/user";
 import {TokenService} from "../token/token.service";
 import {catchError, map} from "rxjs/operators";
 import jwt_decode from "jwt-decode";
 import {API_ENDPOINTS} from '../../constants';
 import {NotificationService} from "../notification/notification.service";
+import {ApiResponse} from "../../model/api-response";
 
 @Injectable({
   providedIn: 'root'
