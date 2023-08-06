@@ -1,18 +1,13 @@
 package com.raf.rs.nwp.security.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 @Getter
-@Setter
 public class UserAuthDetails {
-    private String email;
-    private String password;
-    private List<String> permissions;
+    private final String email;
+    private final String password;
+    private final List<String> permissions;
 }

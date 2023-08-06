@@ -1,9 +1,9 @@
 package com.raf.rs.nwp.exception.utils;
 
-import com.raf.rs.nwp.exception.exceptions.MachineStatusException;
+import com.raf.rs.nwp.exception.exceptions.MachineException;
 import com.raf.rs.nwp.exception.exceptions.ResourceAlreadyExistsException;
 import com.raf.rs.nwp.exception.exceptions.ResourceNotFoundException;
-import com.raf.rs.nwp.exception.exceptions.TokenExpiredException;
+import com.raf.rs.nwp.model.enums.MachineStatus;
 import lombok.AllArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
@@ -26,18 +26,22 @@ public class ExceptionUtils {
         return new ResourceAlreadyExistsException(message);
     }
 
-    public TokenExpiredException createTokenExpiredException(String token) {
-        String message = messageSource.getMessage("error.token.expired", new Object[]{token}, Locale.getDefault());
-        return new TokenExpiredException(message);
-    }
-
-    public MachineStatusException createMachineException(String requestedStatus, String requiredStatus) {
+    public MachineException createMachineException(String requestedStatus, String requiredStatus) {
         String message = messageSource.getMessage("error.machine.status", new Object[]{requestedStatus, requiredStatus}, Locale.getDefault());
-        return new MachineStatusException(message);
+        return new MachineException(message);
     }
 
-    public MachineStatusException createMachineException(String scheduledStatus) {
+    public MachineException createSaveMachineException() {
+        String message = messageSource.getMessage("error.machine.save", new Object[]{}, Locale.getDefault());
+        return new MachineException(message);
+    }
+
+    public MachineException createMachineException(String scheduledStatus) {
         String message = messageSource.getMessage("error.machine.scheduled.status", new Object[]{scheduledStatus}, Locale.getDefault());
-        return new MachineStatusException(message);
+        return new MachineException(message);
+    }
+    public MachineException createMachineIllegalStateException(MachineStatus state) {
+        String message = messageSource.getMessage("error.machine.state", new Object[]{state.name()}, Locale.getDefault());
+        return new MachineException(message);
     }
 }

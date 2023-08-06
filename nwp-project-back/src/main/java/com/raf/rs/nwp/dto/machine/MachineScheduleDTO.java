@@ -1,5 +1,6 @@
 package com.raf.rs.nwp.dto.machine;
 
+import jakarta.validation.constraints.FutureOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class MachineScheduleDTO {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @FutureOrPresent(message = "The scheduled time should be in the future")
     private LocalDateTime scheduledDateTime;
-
-    // getters and setters (you can generate them using your IDE)
 }

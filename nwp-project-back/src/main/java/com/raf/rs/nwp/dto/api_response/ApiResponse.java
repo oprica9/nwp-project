@@ -4,9 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.ZonedDateTime;
-
 
 @Getter
 @Setter
@@ -15,7 +13,7 @@ import java.time.ZonedDateTime;
 public class ApiResponse<T> {
 
     private ZonedDateTime timestamp;
-    private String status;
+    private String statusMessage;
     private T data;
 
 }

@@ -10,6 +10,6 @@ public enum ErrorCode {
     BAD_REQUEST,
     INVALID_CREDENTIALS,
     VALIDATION_FAILED,
-    MACHINE_STATUS
+    MACHINE_ERROR
 
 }

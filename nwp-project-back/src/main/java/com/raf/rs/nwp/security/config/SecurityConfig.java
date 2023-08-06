@@ -1,9 +1,7 @@
 package com.raf.rs.nwp.security.config;
 
-import com.raf.rs.nwp.security.filter.ExceptionHandlingFilter;
-import com.raf.rs.nwp.security.filter.JWTAuthenticationFilter;
-import com.raf.rs.nwp.security.filter.JWTAuthorizationFilter;
-import com.raf.rs.nwp.security.filter.RestAuthenticationEntryPoint;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.raf.rs.nwp.security.filter.*;
 import com.raf.rs.nwp.security.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,12 +20,23 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
+
+import static com.raf.rs.nwp.security.config.SecurityConfig.HTTP.*;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    enum HTTP {
+        GET,
+        POST,
+        PUT,
+        DELETE
+    }
+
+    private final ObjectMapper objectMapper;
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
@@ -39,27 +48,30 @@ public class SecurityConfig {
 
         http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
 
+        // Authorize http requests - H2 console
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                        new AntPathRequestMatcher("/h2-console/**"))
-                .permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/users/create", "POST")).hasAuthority("can_create_users")
-                .requestMatchers(
-                        new AntPathRequestMatcher("/api/users", "GET"),
-                        new AntPathRequestMatcher("/api/users/*", "GET")
-                ).hasAuthority("can_read_users")
-                .requestMatchers(new AntPathRequestMatcher("/api/users/*", "PUT")).hasAuthority("can_update_users")
-                .requestMatchers(new AntPathRequestMatcher("/api/users/*", "DELETE")).hasAuthority("can_delete_users")
-                .requestMatchers(new AntPathRequestMatcher("/api/permissions", "GET")).hasAnyAuthority("can_update_users", "can_create_users")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines", "GET")).hasAuthority("can_search_machines")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines/start/*", "POST")).hasAuthority("can_start_machines")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines/stop/*", "POST")).hasAuthority("can_stop_machines")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines/restart/*", "POST")).hasAuthority("can_restart_machines")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines/*/schedule-start", "POST")).hasAuthority("can_start_machines")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines/*/schedule-stop", "POST")).hasAuthority("can_stop_machines")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines/*/schedule-restart", "POST")).hasAuthority("can_restart_machines")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines/create", "POST")).hasAuthority("can_create_machines")
-                .requestMatchers(new AntPathRequestMatcher("/api/machines/*", "DELETE")).hasAuthority("can_destroy_machines")
+                .requestMatchers(match("/h2-console/**")).permitAll());
+
+        // Authorize http requests - users
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(match(GET, "/api/users", "/api/users/*")).hasAuthority("can_read_users")
+                .requestMatchers(match(GET, "/api/permissions")).hasAnyAuthority("can_update_users", "can_create_users")
+                .requestMatchers(match(POST, "/api/users/create")).hasAuthority("can_create_users")
+                .requestMatchers(match(PUT, "/api/users/*")).hasAuthority("can_update_users")
+                .requestMatchers(match(DELETE, "/api/users/*")).hasAuthority("can_delete_users"));
+
+        // Authorize http requests - machines
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(match(GET, "/api/machines/search", "/api/machines/statuses", "/api/machines/errors")).hasAuthority("can_search_machines")
+                .requestMatchers(match(POST, "/api/machines/create")).hasAuthority("can_create_machines")
+                .requestMatchers(match(PUT, "/api/machines/start/*", "/api/machines/*/schedule-start")).hasAuthority("can_start_machines")
+                .requestMatchers(match(PUT, "/api/machines/stop/*", "/api/machines/*/schedule-stop")).hasAuthority("can_stop_machines")
+                .requestMatchers(match(PUT, "/api/machines/restart/*", "/api/machines/*/schedule-restart")).hasAuthority("can_restart_machines")
+                .requestMatchers(match(DELETE, "/api/machines/*")).hasAuthority("can_destroy_machines"));
+
+        // Authorize http requests - web sockets
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(match(GET, "/ws/**")).permitAll()
                 .anyRequest().authenticated()
         );
 
@@ -71,8 +83,8 @@ public class SecurityConfig {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         http
-                .addFilterBefore(new ExceptionHandlingFilter(), JWTAuthenticationFilter.class)
-                .addFilterBefore(new JWTAuthenticationFilter(jwtUtils, authenticationManager), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new ExceptionHandlingFilter(objectMapper), JWTAuthenticationFilter.class)
+                .addFilterBefore(new JWTAuthenticationFilter(jwtUtils, authenticationManager, objectMapper), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(new JWTAuthorizationFilter(jwtUtils), JWTAuthenticationFilter.class);
 
         return http.build();
@@ -81,7 +93,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200","http://localhost:8080"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://localhost:8080"));
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
@@ -90,6 +102,18 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
+    }
+
+    private AntPathRequestMatcher[] match(String... patterns) {
+        return Stream.of(patterns)
+                .map(AntPathRequestMatcher::new)
+                .toArray(AntPathRequestMatcher[]::new);
+    }
+
+    private AntPathRequestMatcher[] match(HTTP http, String... patterns) {
+        return Stream.of(patterns)
+                .map(pattern -> new AntPathRequestMatcher(pattern, http.name()))
+                .toArray(AntPathRequestMatcher[]::new);
     }
 
 }

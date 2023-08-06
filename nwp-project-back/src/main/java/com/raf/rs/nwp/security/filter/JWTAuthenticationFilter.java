@@ -1,11 +1,9 @@
 package com.raf.rs.nwp.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.raf.rs.nwp.dto.api_response.ApiResponse;
 import com.raf.rs.nwp.dto.auth.AuthenticationResponseDTO;
 import com.raf.rs.nwp.dto.auth.LoginRequest;
-import com.raf.rs.nwp.dto.api_response.ApiResponse;
 import com.raf.rs.nwp.security.utils.JwtUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,19 +22,21 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
+    private final ObjectMapper objectMapper;
 
-    public JWTAuthenticationFilter(JwtUtils jwtUtils, AuthenticationManager authenticationManager) {
+    public JWTAuthenticationFilter(JwtUtils jwtUtils, AuthenticationManager authenticationManager, ObjectMapper objectMapper) {
         this.jwtUtils = jwtUtils;
         this.authenticationManager = authenticationManager;
         this.setFilterProcessesUrl("/auth/login");
-        this.setAuthenticationFailureHandler(new CustomAuthenticationFailureHandler());
+        this.objectMapper = objectMapper;
+        this.setAuthenticationFailureHandler(new CustomAuthenticationFailureHandler(objectMapper));
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse res)
             throws AuthenticationException {
         try {
-            LoginRequest loginRequest = new ObjectMapper().readValue(req.getInputStream(), LoginRequest.class);
+            LoginRequest loginRequest = objectMapper.readValue(req.getInputStream(), LoginRequest.class);
 
             return authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -57,10 +57,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         // Put JWT token in the response
         AuthenticationResponseDTO responseDTO = new AuthenticationResponseDTO(token);
         ApiResponse<AuthenticationResponseDTO> response = new ApiResponse<>(ZonedDateTime.now(), "success", responseDTO);
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        String responseBody = mapper.writeValueAsString(response);
+        String responseBody = objectMapper.writeValueAsString(response);
 
         res.getWriter().write(responseBody);
         res.getWriter().flush();

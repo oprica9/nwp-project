@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
         user.setFirstName(userCreateDTO.getFirstName());
         user.setLastName(userCreateDTO.getLastName());
 
-        // Save User
+        // Save user
         User savedUser = userRepository.save(user);
 
         // Create and save UserPermissions
@@ -118,8 +118,6 @@ public class UserServiceImpl implements UserService {
         );
         userRepository.deleteById(id);
     }
-
-    // helper methods
 
     private Set<UserPermission> getUserPermissions(User user, Set<PermissionDTO> permissions) {
         return permissions.stream()

@@ -32,6 +32,4 @@ public class ErrorMessage {
 
     @Column(name = "error_message", nullable = false, length = 1000)
     private String errorMessage;
-
-    // Constructors, getters, and setters
 }

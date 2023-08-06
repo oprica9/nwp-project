@@ -5,8 +5,6 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,7 +20,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JwtUtils.class);
+    //private static final Logger LOGGER = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -76,26 +74,17 @@ public class JwtUtils {
                     .parseClaimsJws(authToken);
             return true;
         } catch (ExpiredJwtException ex) {
-            // Log the exception message or do something specific for expired tokens
-            LOGGER.error(ex.getMessage());
             throw new JwtException("JWT token is expired.");
         } catch (SignatureException ex) {
-            // Log the exception message or do something specific for signature validation failures
-            LOGGER.error(ex.getMessage());
             throw new JwtException("Invalid JWT signature.");
         } catch (MalformedJwtException ex) {
-            // Log the exception message or do something specific for malformed tokens
-            LOGGER.error(ex.getMessage());
             throw new JwtException("Malformed JWT token.");
         } catch (JwtException ex) {
-            // Catch all other JwtException types
-            LOGGER.error(ex.getMessage());
             throw new JwtException("Invalid JWT token.");
         }
     }
 
     private SecretKey getSigningKey() {
-        // Be sure to encode your secret
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
     }

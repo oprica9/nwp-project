@@ -5,9 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.ZonedDateTime;
-
 
 @Getter
 @Setter
@@ -16,7 +14,7 @@ import java.time.ZonedDateTime;
 public class ApiErrorResponse {
 
     private ZonedDateTime timestamp;
-    private String message;
+    private String errorMessage;
     private ErrorCode errorCode;
 
 }

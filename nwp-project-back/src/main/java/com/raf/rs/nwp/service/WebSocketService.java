@@ -7,4 +7,5 @@ public interface WebSocketService {
     void sendMessage(String destination, Object data);
     void notifyStatusChange(MachineDTO machineDTO);
 
+    void notifyActivityChange(MachineDTO toDTO);
 }

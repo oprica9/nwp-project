@@ -22,4 +22,10 @@ public class WebSocketServiceImpl implements WebSocketService {
         String destination = "/topic/machine-status";
         this.sendMessage(destination, machineDTO);
     }
+
+    @Override
+    public void notifyActivityChange(MachineDTO machineDTO) {
+        String destination = "/topic/machine-activity";
+        this.sendMessage(destination, machineDTO);
+    }
 }

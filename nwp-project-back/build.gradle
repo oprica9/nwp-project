@@ -31,8 +31,8 @@ dependencies {
 	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.5'
 	implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.15.2'
 
-	implementation 'org.springframework:spring-websocket:5.3.10'
-	implementation 'org.springframework:spring-messaging:5.3.10'
+	implementation 'org.springframework:spring-websocket:6.0.6'
+	implementation 'org.springframework:spring-messaging:6.0.9'
 	implementation 'javax.websocket:javax.websocket-api:1.1'
 	compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
 

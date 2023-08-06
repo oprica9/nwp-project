@@ -1,14 +1,9 @@
 package com.raf.rs.nwp.dto.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-@NoArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Getter
-@Setter
 public class AuthenticationResponseDTO {
-    private String jwt;
+    private final String jwt;
 }

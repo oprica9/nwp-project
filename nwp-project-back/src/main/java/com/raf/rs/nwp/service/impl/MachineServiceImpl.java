@@ -1,8 +1,10 @@
 package com.raf.rs.nwp.service.impl;
 
+import com.raf.rs.nwp.dto.machine.ErrorMessageDTO;
 import com.raf.rs.nwp.dto.machine.MachineCreateDTO;
 import com.raf.rs.nwp.dto.machine.MachineDTO;
 import com.raf.rs.nwp.exception.utils.ExceptionUtils;
+import com.raf.rs.nwp.mapper.ErrorMessageMapper;
 import com.raf.rs.nwp.mapper.MachineMapper;
 import com.raf.rs.nwp.model.ErrorMessage;
 import com.raf.rs.nwp.model.Machine;
@@ -13,9 +15,8 @@ import com.raf.rs.nwp.repository.MachineRepository;
 import com.raf.rs.nwp.repository.UserRepository;
 import com.raf.rs.nwp.service.MachineService;
 import com.raf.rs.nwp.service.WebSocketService;
+import com.raf.rs.nwp.utils.DelayUtils;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,36 +26,34 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MachineServiceImpl implements MachineService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MachineService.class);
     private final ZoneOffset CET_ZONE_OFFSET = ZoneOffset.ofHours(2);
 
     private final MachineRepository machineRepository;
     private final UserRepository userRepository;
     private final ErrorMessageRepository errorMessageRepository;
     private final MachineMapper machineMapper;
-
+    private final ErrorMessageMapper errorMessageMapper;
     private final ExceptionUtils exceptionUtils;
-
     private final WebSocketService webSocketService;
-
     private final ThreadPoolTaskScheduler taskScheduler;
 
     @Override
     public Page<MachineDTO> searchMachines(
             String name,
             List<MachineStatus> statuses,
-            LocalDate dateFrom,
-            LocalDate dateTo,
+            OffsetDateTime dateFrom,
+            OffsetDateTime dateTo,
             Pageable pageable) {
 
         Specification<Machine> spec = Specification.where(null);
@@ -68,7 +67,7 @@ public class MachineServiceImpl implements MachineService {
         }
 
         if (dateFrom != null && dateTo != null) {
-            spec = spec.and((root, query, cb) -> cb.between(root.get("createdAt"), dateFrom.atStartOfDay(), dateTo.plusDays(1).atStartOfDay()));
+            spec = spec.and((root, query, cb) -> cb.between(root.get("createdAt"), dateFrom, dateTo));
         }
 
         Page<Machine> machines = machineRepository.findAll(spec, pageable);
@@ -85,10 +84,10 @@ public class MachineServiceImpl implements MachineService {
         machine.setStatus(MachineStatus.STARTING);
         machine.setScheduledStatus(MachineStatus.RUNNING);
         saveMachineWithOptimisticLock(machine);
+        webSocketService.notifyStatusChange(machineMapper.toDTO(machine));
 
-        Instant delay = Instant.now().plusMillis(10000 + new Random().nextInt(5000));
+        Instant delay = DelayUtils.getDelay(10000, 5000);
 
-        // Only execute once
         taskScheduler.schedule(() -> {
             // This block is executed in a separate thread
             Machine updatedMachine = getMachine(machineId);
@@ -108,11 +107,10 @@ public class MachineServiceImpl implements MachineService {
         machine.setStatus(MachineStatus.STOPPING);
         machine.setScheduledStatus(MachineStatus.STOPPED);
         saveMachineWithOptimisticLock(machine);
+        webSocketService.notifyStatusChange(machineMapper.toDTO(machine));
 
-        Instant delay = Instant.now().plusMillis(10000 + new Random().nextInt(5000));
+        Instant delay = DelayUtils.getDelay(10000, 5000);
         taskScheduler.schedule(() -> {
-            // This block is executed in a separate thread
-            LOGGER.error("STOP>>>>>>>>>>>>Machine stopped");
             Machine updatedMachine = getMachine(machineId);
             updatedMachine.setStatus(MachineStatus.STOPPED);
             updatedMachine.setScheduledStatus(null);
@@ -130,18 +128,16 @@ public class MachineServiceImpl implements MachineService {
         machine.setStatus(MachineStatus.RESTARTING);
         machine.setScheduledStatus(MachineStatus.RESTARTING);
         saveMachineWithOptimisticLock(machine);
+        webSocketService.notifyStatusChange(machineMapper.toDTO(machine));
 
-        Instant stopDelay = Instant.now().plusMillis(5000 + new Random().nextInt(2500));
+        Instant stopDelay = DelayUtils.getDelay(5000, 2500);
         taskScheduler.schedule(() -> {
-            // This block is executed in a separate thread
-            LOGGER.error("RESTART>>>>>>>>>>>>Machine stopped");
             Machine updatedMachine = getMachine(machineId);
             updatedMachine.setStatus(MachineStatus.STOPPED);
             saveMachineWithOptimisticLock(updatedMachine);
 
-            Instant startDelay = Instant.now().plusMillis(5000 + new Random().nextInt(2500));
+            Instant startDelay = DelayUtils.getDelay(5000, 2500);
             taskScheduler.schedule(() -> {
-                LOGGER.error("RESTART>>>>>>>>>>>>Machine running");
                 Machine machineAfterStart = getMachine(machineId);
                 machineAfterStart.setStatus(MachineStatus.RUNNING);
                 machineAfterStart.setScheduledStatus(null);
@@ -155,21 +151,17 @@ public class MachineServiceImpl implements MachineService {
     @Override
     @Transactional
     public MachineDTO createMachine(String email, MachineCreateDTO machineCreateDTO) {
-        // check if user exists in the database
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> exceptionUtils.createResourceNotFoundException("User", "email", email));
 
-        // create a new Machine object
         Machine machine = new Machine();
         machine.setName(machineCreateDTO.getName());
-        machine.setStatus(MachineStatus.STOPPED); // set the machine's status to STOPPED
-        machine.setActive(true); // set the machine to active
-        machine.setCreatedBy(user); // set the machine's creator to the logged-in user
+        machine.setStatus(MachineStatus.STOPPED);
+        machine.setActive(true);
+        machine.setCreatedBy(user);
 
-        // save it to the database
         Machine savedMachine = machineRepository.save(machine);
 
-        // convert entity back to DTO and return
         return machineMapper.toDTO(savedMachine);
     }
 
@@ -179,11 +171,12 @@ public class MachineServiceImpl implements MachineService {
                 .orElseThrow(() -> exceptionUtils.createResourceNotFoundException("Machine", "id", machineId.toString()));
 
         if (!machine.getStatus().equals(MachineStatus.STOPPED)) {
-            throw new IllegalStateException("Machine must be in STOPPED state to be destroyed"); // TO DO handle in exceptionUtils
+            throw exceptionUtils.createMachineIllegalStateException(MachineStatus.STOPPED);
         }
 
         machine.setActive(false);
         saveMachineWithOptimisticLock(machine);
+        webSocketService.notifyActivityChange(machineMapper.toDTO(machine));
     }
 
     @Override
@@ -219,6 +212,17 @@ public class MachineServiceImpl implements MachineService {
         }, scheduledDateTime.toInstant(CET_ZONE_OFFSET));
     }
 
+    @Override
+    public List<String> getAllStatuses() {
+        return Arrays.stream(MachineStatus.values()).map(Enum::name).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<ErrorMessageDTO> getAllErrors(String email, Pageable pageable) {
+        Page<ErrorMessage> errorMessages = errorMessageRepository.findAllByUserEmail(email, pageable);
+        return errorMessages.map(errorMessageMapper::toDTO);
+    }
+
     private Machine getMachine(Long machineId) {
         return machineRepository.findById(machineId)
                 .orElseThrow(() -> exceptionUtils.createResourceNotFoundException("Machine", "id", machineId.toString()));
@@ -237,8 +241,7 @@ public class MachineServiceImpl implements MachineService {
         try {
             machineRepository.save(machine);
         } catch (ObjectOptimisticLockingFailureException e) {
-            LOGGER.error("Failed to update machine status due to concurrent modification. Please try again.");
-            throw exceptionUtils.createMachineException("Failed to update machine status due to concurrent modification. Please try again.");
+            throw exceptionUtils.createSaveMachineException();
         }
     }
 
