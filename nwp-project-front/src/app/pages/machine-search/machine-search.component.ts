@@ -4,10 +4,11 @@ import {MachineService} from "../../service/machine/machine.service";
 import {MachineDTO} from "../../model/machine";
 import {NotificationService} from "../../service/notification/notification.service";
 import {SearchParams} from '../../model/machine';
-import {filter, takeUntil} from "rxjs/operators";
-import {Subject} from 'rxjs';
+import {catchError, takeUntil} from "rxjs/operators";
+import {Subject, tap} from 'rxjs';
 import {WebsocketService} from "../../service/websocket/websocket.service";
-
+import {AuthUser} from "../../model/user";
+import {AuthService} from "../../service/auth/auth.service";
 
 @Component({
   selector: 'app-machine-search',
@@ -15,6 +16,8 @@ import {WebsocketService} from "../../service/websocket/websocket.service";
   styleUrls: ['./machine-search.component.css']
 })
 export class MachineSearchComponent implements OnInit, OnDestroy {
+
+  currentUser?: AuthUser | null;
 
   public form: FormGroup;
   machines: MachineDTO[] = [];
@@ -24,7 +27,9 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
   size: number = 10;
   private ngUnsubscribe = new Subject<void>();
 
-  constructor(private fb: FormBuilder, private machineService: MachineService, private notifyService: NotificationService, private websocketService: WebsocketService) {
+  actionInProgress: Map<number, boolean>;
+
+  constructor(private fb: FormBuilder, private machineService: MachineService, private notifyService: NotificationService, private websocketService: WebsocketService, private authService: AuthService) {
     this.form = this.fb.group({
       name: [''],
       statuses: [[]],
@@ -33,6 +38,8 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
       page: [0],
       size: [10]
     });
+    this.actionInProgress = new Map();
+    this.authService.currentUser$.subscribe(user => this.currentUser = user);
   }
 
   ngOnInit(): void {
@@ -46,6 +53,9 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
         const index = this.machines.findIndex((machine) => machine.id === updatedMachine.id);
         if (index !== -1) {
           this.machines[index] = updatedMachine;
+          if (this.mainMachineStatuses.includes(updatedMachine.status)) {
+            this.actionInProgress.set(updatedMachine.id, false);
+          }
         }
       }
     });
@@ -62,6 +72,7 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.ngUnsubscribe.next();
     this.ngUnsubscribe.complete();
+    this.actionInProgress.clear();
   }
 
   fetchAvailableStatuses(): void {
@@ -90,8 +101,10 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
       response => {
         this.machines = response.data.content;
         this.totalMachines = response.data.totalElements;
+        this.populateMAvailableActions();
       },
       error => {
+        console.log(error);
         this.notifyService.showError('An unknown error occurred.');
       }
     );
@@ -115,5 +128,166 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
     };
   }
 
+  startMachine(machineId: number) {
+    const currentUser = this.currentUser;
 
+    if (!currentUser) {
+      this.notifyService.showError('User is not authenticated.');
+      return;
+    }
+
+    const userPermissions = currentUser.permissions || [];
+
+    if (!userPermissions.includes('can_start_machines')) {
+      this.notifyService.showError('You do not have permission to start machines.');
+      return;
+    }
+
+    this.machineService.startMachine(machineId).pipe(
+      tap(() => {
+        this.actionInProgress.set(machineId, true);
+        this.notifyService.showSuccess('Machine is starting.');
+        this.searchMachines();  // Fetch users again to update the list
+      }),
+      catchError((error) => {
+        this.notifyService.showError('Failed to start the machine.');
+        throw error;  // If you want to continue the error chain
+      })
+    ).subscribe({
+      next: () => {
+      },  // handle next value, if needed
+      error: err => console.error(err),  // handle error
+    });
+  }
+
+  restartMachine(machineId: number) {
+    const currentUser = this.currentUser;
+
+    if (!currentUser) {
+      this.notifyService.showError('User is not authenticated.');
+      return;
+    }
+
+    const userPermissions = currentUser.permissions || [];
+
+    if (!userPermissions.includes('can_restart_machines')) {
+      this.notifyService.showError('You do not have permission to restart machines.');
+      return;
+    }
+
+    this.machineService.restartMachine(machineId).pipe(
+      tap(() => {
+        this.actionInProgress.set(machineId, true);
+        this.notifyService.showSuccess('Machine is restarting.');
+        this.searchMachines();  // Fetch users again to update the list
+      }),
+      catchError((error) => {
+        this.notifyService.showError('Failed to restart the machine.');
+        throw error;  // If you want to continue the error chain
+      })
+    ).subscribe({
+      next: () => {
+      },  // handle next value, if needed
+      error: err => console.error(err),  // handle error
+    });
+  }
+
+  stopMachine(machineId: number) {
+    const currentUser = this.currentUser;
+
+    if (!currentUser) {
+      this.notifyService.showError('User is not authenticated.');
+      return;
+    }
+
+    const userPermissions = currentUser.permissions || [];
+
+    if (!userPermissions.includes('can_stop_machines')) {
+      this.notifyService.showError('You do not have permission to stop machines.');
+      return;
+    }
+
+    this.machineService.stopMachine(machineId).pipe(
+      tap(() => {
+        this.actionInProgress.set(machineId, true);
+        this.notifyService.showSuccess('Machine is stopping.');
+        this.searchMachines();  // Fetch users again to update the list
+      }),
+      catchError((error) => {
+        this.notifyService.showError('Failed to stop the machine.');
+        throw error;  // If you want to continue the error chain
+      })
+    ).subscribe({
+      next: () => {
+      },  // handle next value, if needed
+      error: err => console.error(err),  // handle error
+    });
+  }
+
+  mainMachineStatuses: string[] = ['RUNNING', 'STOPPED'];
+
+  actionAllowed(status: string, action: string): boolean {
+    if (action == "START") {
+      if (status == 'STOPPED') {
+        return true;
+      }
+    } else if (action == "STOP") {
+      if (status == 'RUNNING') {
+        return true;
+      }
+    } else if (action == "RESTART") {
+      if (status == 'RUNNING') {
+        return true;
+      }
+    } else if (action == "DESTROY") {
+      if (status == 'STOPPED') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private populateMAvailableActions() {
+    this.machines.forEach(machine => {
+      if (!this.mainMachineStatuses.includes(machine.status)) {
+        this.actionInProgress.set(machine.id, true);
+      }
+    })
+  }
+
+  destroyMachine(machineId: number) {
+    const currentUser = this.currentUser;
+
+    if (!currentUser) {
+      this.notifyService.showError('User is not authenticated.');
+      return;
+    }
+
+    const userPermissions = currentUser.permissions || [];
+
+    if (!userPermissions.includes('can_destroy_machines')) {
+      this.notifyService.showError('You do not have permission to destroy machines.');
+      return;
+    }
+
+    this.machineService.destroyMachine(machineId).pipe(
+      tap(() => {
+        this.actionInProgress.set(machineId, true);
+        this.notifyService.showSuccess('Machine successfully destroyed.');
+        this.searchMachines();  // Fetch users again to update the list
+      }),
+      catchError((error) => {
+        this.notifyService.showError('Failed to destroy the machine.');
+        throw error;  // If you want to continue the error chain
+      })
+    ).subscribe({
+      next: () => {
+      },  // handle next value, if needed
+      error: err => console.error(err),  // handle error
+    });
+  }
+
+  scheduleMachineAction(id: number) {
+
+  }
 }

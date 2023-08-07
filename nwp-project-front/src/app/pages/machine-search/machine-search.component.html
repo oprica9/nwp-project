@@ -39,6 +39,7 @@
           <th>Status</th>
           <th>Created By</th>
           <th>Active</th>
+          <th>Available Actions</th>
           <th></th>
         </tr>
         </thead>
@@ -51,7 +52,28 @@
           <td>{{machine.status}}</td>
           <td>{{machine.createdBy}}</td>
           <td>{{machine.active}}</td>
-
+          <td *ngIf="machine.active">
+            <button class="btn btn-success me-2"
+                    [disabled]="actionInProgress.get(machine.id) || !actionAllowed(machine.status, 'START')"
+                    (click)="$event.stopPropagation(); startMachine(machine.id)">
+              Start
+            </button>
+            <button class="btn btn-success me-2"
+                    [disabled]="actionInProgress.get(machine.id) || !actionAllowed(machine.status, 'STOP')"
+                    (click)="$event.stopPropagation(); stopMachine(machine.id)">
+              Stop
+            </button>
+            <button class="btn btn-success me-2"
+                    [disabled]="actionInProgress.get(machine.id) || !actionAllowed(machine.status, 'RESTART')"
+                    (click)="$event.stopPropagation(); restartMachine(machine.id)">
+              Restart
+            </button>
+            <button class="btn btn-danger me-2"
+                    [disabled]="actionInProgress.get(machine.id) || !actionAllowed(machine.status, 'DESTROY')"
+                    (click)="$event.stopPropagation(); destroyMachine(machine.id)">
+              Destroy
+            </button>
+          </td>
         </tr>
         </tbody>
       </table>

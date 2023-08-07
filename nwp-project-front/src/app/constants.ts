@@ -1,6 +1,8 @@
+import {environment} from "../environments/environment";
+
 export const API_ENDPOINTS = {
-  AUTH: 'http://localhost:8080/auth/login',
-  USERS: 'http://localhost:8080/api/users',
-  MACHINES: 'http://localhost:8080/api/machines',
-  PERMISSIONS: 'http://localhost:8080/api/permissions'
+  AUTH: `${environment.appURL}/auth/login`,
+  USERS: `${environment.appURL}/api/users`,
+  MACHINES: `${environment.appURL}/api/machines`,
+  PERMISSIONS: `${environment.appURL}/api/permissions`
 }

@@ -52,4 +52,33 @@ export class MachineService {
       {params}
     );
   }
+
+  startMachine(machineId: number): Observable<ApiResponse<string>> {
+    return this.http.put<ApiResponse<string>>(
+      `${API_ENDPOINTS.MACHINES}/${machineId}/start`,
+      null
+    );
+  }
+
+  restartMachine(machineId: number): Observable<ApiResponse<string>> {
+    return this.http.put<ApiResponse<string>>(
+      `${API_ENDPOINTS.MACHINES}/${machineId}/restart`,
+      null
+    );
+  }
+
+  stopMachine(machineId: number): Observable<ApiResponse<string>> {
+    return this.http.put<ApiResponse<string>>(
+      `${API_ENDPOINTS.MACHINES}/${machineId}/stop`,
+      null
+    );
+  }
+
+
+  destroyMachine(machineId: number): Observable<ApiResponse<string>> {
+    return this.http.put<ApiResponse<string>>(
+      `${API_ENDPOINTS.MACHINES}/${machineId}/destroy`,
+      null
+    );
+  }
 }
