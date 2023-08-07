@@ -43,3 +43,8 @@ export interface User {
   permissions: Permission[];
   // add other fields as needed
 }
+
+interface UserListResponse {
+  content: User[];
+  totalElements: number;
+}

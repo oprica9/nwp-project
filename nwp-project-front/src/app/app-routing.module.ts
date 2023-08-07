@@ -36,9 +36,9 @@ const routes: Routes = [
   {
     path: 'machine-search',
     component: MachineSearchComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {requiredPermission: 'can_search_machines'}
   },
-  {path: 'search-machines', component: MachineSearchComponent, canActivate: [AuthGuard]},
   {
     path: 'machine-create',
     component: MachineCreateComponent,
@@ -48,8 +48,7 @@ const routes: Routes = [
   {
     path: 'machine-errors',
     component: MachineErrorsComponent,
-    canActivate: [AuthGuard, PermissionGuard],
-    data: {requiredPermission: 'can_create_machines'}
+    canActivate: [AuthGuard]
   },
   {path: '**', redirectTo: '/'}
 ];

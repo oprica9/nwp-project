@@ -9,13 +9,12 @@ import {Subject} from 'rxjs';
 import {WebsocketService} from "../../service/websocket/websocket.service";
 
 
-
 @Component({
   selector: 'app-machine-search',
   templateUrl: './machine-search.component.html',
   styleUrls: ['./machine-search.component.css']
 })
-export class MachineSearchComponent implements OnInit, OnDestroy  {
+export class MachineSearchComponent implements OnInit, OnDestroy {
 
   public form: FormGroup;
   machines: MachineDTO[] = [];
@@ -50,21 +49,6 @@ export class MachineSearchComponent implements OnInit, OnDestroy  {
         }
       }
     });
-    /*
-    this.websocketService.getConnectionStatus().pipe(
-      filter(connected => connected) // Only pass through values when connected is true
-    ).subscribe(() => {
-      this.websocketService.subscribeToMessages().subscribe((message) => {
-        // Parse the message and update the corresponding machine in the machines array
-        console.log('Received WebSocket message:', message);
-        const updatedMachine: MachineDTO = JSON.parse(message);
-        const index = this.machines.findIndex((machine) => machine.id === updatedMachine.id);
-        if (index !== -1) {
-          this.machines[index] = updatedMachine;
-        }
-      });
-    });*/
-
     this.searchMachines();
     this.fetchAvailableStatuses();
   }

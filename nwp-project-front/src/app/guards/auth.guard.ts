@@ -13,7 +13,7 @@ export class AuthGuard implements CanActivate {
   canActivate(): boolean {
     const jwt = this.tokenService.getToken();
     if (!jwt) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login']).then();
       return false;
     }
     return true;

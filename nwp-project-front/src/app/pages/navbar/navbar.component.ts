@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {EMPTY, Subscription} from "rxjs";
+import {Subscription} from "rxjs";
 import {AuthService} from "../../service/auth/auth.service";
 import {Router} from "@angular/router";
 import {AuthUser} from "../../model/user";
@@ -10,31 +10,50 @@ import {AuthUser} from "../../model/user";
   styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  isLoggedIn = false;
-  private subscription: Subscription = EMPTY.subscribe();
+
+  currentUser?: AuthUser | null;
+  private subscription: Subscription = new Subscription();
 
   constructor(private authService: AuthService, private router: Router) {
+    this.subscription.add(
+      this.authService.currentUser$.subscribe(user => this.currentUser = user)
+    );
   }
 
   ngOnInit() {
-    this.subscription = this.authService.isLoggedIn.subscribe(value => {
-      this.isLoggedIn = value;
-    });
   }
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
   }
 
-  logout(){
+  logout() {
     this.authService.logout();
-    this.router.navigate(['/login']);
-    this.isLoggedIn = false;
+    this.router.navigate(['/login']).then();
   }
 
-  userCanCreate() {
-    const currentUser = this.authService.currentUserValue;
-    const userPermissions = ((currentUser as AuthUser).permissions || [])
-    return userPermissions.includes('can_create_users');
+  userCanCreate(): boolean {
+    const currentUser = this.currentUser;
+    if (!currentUser) {
+      return false;
+    }
+    return currentUser.permissions.includes('can_create_users');
   }
+
+  userCanSearchMachines(): boolean {
+    const currentUser = this.currentUser;
+    if (!currentUser) {
+      return false;
+    }
+    return currentUser.permissions.includes('can_search_machines');
+  }
+
+  userCanCreateMachines(): boolean {
+    const currentUser = this.currentUser;
+    if (!currentUser) {
+      return false;
+    }
+    return currentUser.permissions.includes('can_create_machines');
+  }
+
 }

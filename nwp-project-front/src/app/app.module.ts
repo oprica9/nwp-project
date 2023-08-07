@@ -16,10 +16,13 @@ import {ToastrModule} from 'ngx-toastr';
 import {HTTP_INTERCEPTORS} from '@angular/common/http';
 import {AuthInterceptor} from './interceptors/auth.interceptor';
 import {NgxPaginationModule} from 'ngx-pagination';
-import { HomeComponent } from './pages/home/home.component';
-import { MachineSearchComponent } from './pages/machine-search/machine-search.component';
-import { MachineCreateComponent } from './pages/create-machine/machine-create.component';
-import { MachineErrorsComponent } from './pages/machine-errors/machine-errors.component';
+import {HomeComponent} from './pages/home/home.component';
+import {MachineSearchComponent} from './pages/machine-search/machine-search.component';
+import {MachineCreateComponent} from './pages/create-machine/machine-create.component';
+import {MachineErrorsComponent} from './pages/machine-errors/machine-errors.component';
+import {ErrorHandler} from '@angular/core';
+import {GlobalErrorHandler} from './errors/global-error-handler.service';
+import {HttpErrorInterceptor} from './errors/interceptor/http-error-interceptor.service';
 
 
 @NgModule({
@@ -45,7 +48,22 @@ import { MachineErrorsComponent } from './pages/machine-errors/machine-errors.co
     NgxPaginationModule,
     ReactiveFormsModule
   ],
-  providers: [{provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true}],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: HttpErrorInterceptor,
+      multi: true
+    },
+    {
+      provide: ErrorHandler,
+      useClass: GlobalErrorHandler
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {

@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {User, Permission, UserUpdateDTO} from '../../model/user';
 import {API_ENDPOINTS} from '../../constants';
@@ -15,7 +15,11 @@ export class UserService {
   }
 
   fetchUsers(page: number = 0, size: number = 10): Observable<ApiResponse<Page<User>>> {
-    return this.http.get<ApiResponse<Page<User>>>(`${API_ENDPOINTS.USERS}?page=${page}&size=${size}`);
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    return this.http.get<ApiResponse<Page<User>>>(`${API_ENDPOINTS.USERS}`, {params});
   }
 
   getUserById(id: number): Observable<ApiResponse<User>> {

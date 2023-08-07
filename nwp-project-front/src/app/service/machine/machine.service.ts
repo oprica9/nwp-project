@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import * as moment from 'moment';
 import {ErrorMessageDTO, MachineCreateDTO, MachineDTO, SearchParams} from "../../model/machine";
@@ -17,25 +17,39 @@ export class MachineService {
   }
 
   searchMachines(params: SearchParams): Observable<ApiResponse<Page<MachineDTO>>> {
-    // Convert dates to ISO 8601 string format
-    if (params.dateFrom) {
-      params.dateFrom = moment(params.dateFrom).format();
-    }
-    if (params.dateTo) {
-      params.dateTo = moment(params.dateTo).format();
-    }
-    return this.http.post<ApiResponse<Page<MachineDTO>>>(`${API_ENDPOINTS.MACHINES}/search`, params);
+    const transformedParams: SearchParams = {
+      ...params,
+      dateFrom: params.dateFrom ? moment(params.dateFrom).format() : undefined,
+      dateTo: params.dateTo ? moment(params.dateTo).format() : undefined
+    };
+
+    return this.http.post<ApiResponse<Page<MachineDTO>>>(
+      `${API_ENDPOINTS.MACHINES}/search`,
+      transformedParams
+    );
   }
 
   getAvailableStatuses(): Observable<ApiResponse<string[]>> {
-    return this.http.get<ApiResponse<string[]>>(`${API_ENDPOINTS.MACHINES}/statuses`);
+    return this.http.get<ApiResponse<string[]>>(
+      `${API_ENDPOINTS.MACHINES}/statuses`
+    );
   }
 
-  createMachine(machine: MachineCreateDTO) {
-    return this.http.post<ApiResponse<User>>(`${API_ENDPOINTS.MACHINES}/create`, machine);
+  createMachine(machine: MachineCreateDTO): Observable<ApiResponse<User>> {
+    return this.http.post<ApiResponse<User>>(
+      `${API_ENDPOINTS.MACHINES}/create`,
+      machine
+    );
   }
 
   fetchErrors(page: number = 0, size: number = 10): Observable<ApiResponse<Page<ErrorMessageDTO>>> {
-    return this.http.get<ApiResponse<Page<ErrorMessageDTO>>>(`${API_ENDPOINTS.MACHINES}/errors?page=${page}&size=${size}`);
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    return this.http.get<ApiResponse<Page<ErrorMessageDTO>>>(
+      `${API_ENDPOINTS.MACHINES}/errors`,
+      {params}
+    );
   }
 }

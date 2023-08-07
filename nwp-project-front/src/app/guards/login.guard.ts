@@ -13,7 +13,7 @@ export class LoginGuard implements CanActivate {
   canActivate(): boolean {
     const jwt = this.tokenService.getToken();
     if (jwt) {
-      this.router.navigate(['/']);
+      this.router.navigate(['/']).then();
       return false;
     }
     return true;

@@ -1,6 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { AuthService } from './service/auth/auth.service';
-import {EMPTY, Subscription} from 'rxjs';
+import {Component, OnInit, OnDestroy} from '@angular/core';
+import {AuthService} from './service/auth/auth.service';
+import {Subscription} from 'rxjs';
+import {AuthUser} from "./model/user";
 
 @Component({
   selector: 'app-root',
@@ -8,19 +9,21 @@ import {EMPTY, Subscription} from 'rxjs';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'Your App Name';
-  isLoggedIn: boolean = false;
-  private loginSub: Subscription = EMPTY.subscribe();
+  title = 'The Cloud Provider';
+  currentUser?: AuthUser | null;
+  private userSub: Subscription = new Subscription();
 
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {
+  }
 
   ngOnInit(): void {
-    this.loginSub = this.authService.isLoggedIn.subscribe(loggedIn => {
-      this.isLoggedIn = loggedIn;
+    this.userSub = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
     });
   }
 
   ngOnDestroy(): void {
-    this.loginSub.unsubscribe();
+    this.userSub.unsubscribe();
   }
+
 }
