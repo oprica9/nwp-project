@@ -170,9 +170,7 @@ public class MachineServiceImpl implements MachineService {
         Machine machine = machineRepository.findById(machineId)
                 .orElseThrow(() -> exceptionUtils.createResourceNotFoundException("Machine", "id", machineId.toString()));
 
-        if (!machine.getStatus().equals(MachineStatus.STOPPED)) {
-            throw exceptionUtils.createMachineIllegalStateException(MachineStatus.STOPPED);
-        }
+        checkMachineAvailability(machine, MachineStatus.STOPPED);
 
         machine.setActive(false);
         saveMachineWithOptimisticLock(machine);
@@ -234,6 +232,10 @@ public class MachineServiceImpl implements MachineService {
         }
         if (machine.getStatus() != requiredStatus) {
             throw exceptionUtils.createMachineException(machine.getStatus().name(), requiredStatus.name());
+        }
+
+        if(!machine.getActive()){
+            throw exceptionUtils.createMachineActivityException();
         }
     }
 

@@ -40,8 +40,9 @@ public class ExceptionUtils {
         String message = messageSource.getMessage("error.machine.scheduled.status", new Object[]{scheduledStatus}, Locale.getDefault());
         return new MachineException(message);
     }
-    public MachineException createMachineIllegalStateException(MachineStatus state) {
-        String message = messageSource.getMessage("error.machine.state", new Object[]{state.name()}, Locale.getDefault());
+
+    public MachineException createMachineActivityException() {
+        String message = messageSource.getMessage("error.machine.activity", new Object[]{}, Locale.getDefault());
         return new MachineException(message);
     }
 }
