@@ -9,7 +9,7 @@ import {AuthUser} from "./model/user";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'The Cloud Provider';
+  title = 'Cloud Simulator';
   currentUser?: AuthUser | null;
   private userSub: Subscription = new Subscription();
 

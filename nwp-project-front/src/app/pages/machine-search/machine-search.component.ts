@@ -5,7 +5,7 @@ import {MachineDTO} from "../../model/machine";
 import {NotificationService} from "../../service/notification/notification.service";
 import {SearchParams} from '../../model/machine';
 import {catchError, takeUntil} from "rxjs/operators";
-import {Subject, tap} from 'rxjs';
+import {Subject, tap, throwError} from 'rxjs';
 import {WebsocketService} from "../../service/websocket/websocket.service";
 import {AuthUser} from "../../model/user";
 import {AuthService} from "../../service/auth/auth.service";
@@ -97,17 +97,22 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
   searchMachines(): void {
     const searchParams: Partial<SearchParams> = this.buildSearchParams();
 
-    this.machineService.searchMachines(searchParams).subscribe(
-      response => {
+    this.machineService.searchMachines(searchParams).pipe(
+      tap(response => {
         this.machines = response.data.content;
         this.totalMachines = response.data.totalElements;
         this.populateMAvailableActions();
-      },
-      error => {
-        console.log(error);
+      }),
+      catchError(error => {
         this.notifyService.showError('An unknown error occurred.');
-      }
-    );
+        return throwError(error);  // Re-throw the error if you want to keep the error chain
+      })
+    ).subscribe({
+      next: () => {
+      },  // handle next value, if needed
+      error: err => console.error(err),  // handle error
+    });
+
   }
 
   private buildSearchParams(): Partial<SearchParams> {
@@ -123,8 +128,8 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
       statuses: statusesList,
       dateFrom: formValue.dateFrom, // We'll use string to hold the date-time data in ISO 8601 format
       dateTo: formValue.dateTo, // We'll use string to hold the date-time data in ISO 8601 format
-      page: formValue.page,
-      size: formValue.size
+      page: this.page - 1,
+      size: this.size
     };
   }
 
@@ -285,9 +290,5 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
       },  // handle next value, if needed
       error: err => console.error(err),  // handle error
     });
-  }
-
-  scheduleMachineAction(id: number) {
-
   }
 }
