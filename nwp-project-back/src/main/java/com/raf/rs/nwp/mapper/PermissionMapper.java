@@ -8,15 +8,7 @@ import org.springframework.stereotype.Service;
 public class PermissionMapper {
 
     public PermissionDTO toDTO(Permission permission) {
-        return new PermissionDTO(permission.getId(), permission.getName());
-    }
-
-    public Permission toEntity(PermissionDTO dto) {
-        Permission permission = new Permission();
-        permission.setId(dto.getId());
-        permission.setName(dto.getName());
-
-        return permission;
+        return new PermissionDTO(permission.getName());
     }
 
 }

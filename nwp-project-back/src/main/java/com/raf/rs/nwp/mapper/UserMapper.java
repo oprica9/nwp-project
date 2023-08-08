@@ -36,24 +36,4 @@ public class UserMapper {
                 permissionNames);
     }
 
-    public User toEntity(UserDTO dto) {
-        User user = new User();
-        user.setId(dto.getId());
-        user.setEmail(dto.getEmail());
-        user.setFirstName(dto.getFirstName());
-        user.setLastName(dto.getLastName());
-
-        Set<UserPermission> userPermissions = dto.getPermissions().stream()
-                .map(permissionDTO -> {
-                    UserPermission userPermission = new UserPermission();
-                    userPermission.setUser(user);
-                    userPermission.setPermission(permissionMapper.toEntity(permissionDTO));
-                    return userPermission;
-                })
-                .collect(Collectors.toSet());
-
-        user.setUserPermissions(userPermissions);
-
-        return user;
-    }
 }
