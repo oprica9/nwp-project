@@ -2,11 +2,11 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import * as moment from 'moment';
-import {ErrorMessageDTO, MachineCreateDTO, MachineDTO, SearchParams} from "../../model/machine";
+import {ErrorMessage, Machine, SearchParams} from "../../model/model.machine";
 import {ApiResponse} from "../../model/api-response";
 import {Page} from "../../model/page";
-import {User} from "../../model/user";
-import {API_ENDPOINTS} from "../../constants";
+import {ApiEndpoints} from "../../constants";
+import {MachineCreateDTO} from "../../model/dto.machine";
 
 @Injectable({
   providedIn: 'root'
@@ -16,60 +16,60 @@ export class MachineService {
   constructor(private http: HttpClient) {
   }
 
-  searchMachines(params: SearchParams): Observable<ApiResponse<Page<MachineDTO>>> {
+  searchMachines(params: SearchParams): Observable<ApiResponse<Page<Machine>>> {
     const transformedParams: SearchParams = {
       ...params,
       dateFrom: params.dateFrom ? moment(params.dateFrom).format() : undefined,
       dateTo: params.dateTo ? moment(params.dateTo).format() : undefined
     };
 
-    return this.http.post<ApiResponse<Page<MachineDTO>>>(
-      `${API_ENDPOINTS.MACHINES}/search`,
+    return this.http.post<ApiResponse<Page<Machine>>>(
+      `${ApiEndpoints.MACHINES}/search`,
       transformedParams
     );
   }
 
   getAvailableStatuses(): Observable<ApiResponse<string[]>> {
     return this.http.get<ApiResponse<string[]>>(
-      `${API_ENDPOINTS.MACHINES}/statuses`
+      `${ApiEndpoints.MACHINES}/statuses`
     );
   }
 
-  createMachine(machine: MachineCreateDTO): Observable<ApiResponse<User>> {
-    return this.http.post<ApiResponse<User>>(
-      `${API_ENDPOINTS.MACHINES}/create`,
+  createMachine(machine: MachineCreateDTO): Observable<ApiResponse<Machine>> {
+    return this.http.post<ApiResponse<Machine>>(
+      `${ApiEndpoints.MACHINES}/create`,
       machine
     );
   }
 
-  fetchErrors(page: number = 0, size: number = 10): Observable<ApiResponse<Page<ErrorMessageDTO>>> {
+  fetchErrors(page: number = 0, size: number = 10): Observable<ApiResponse<Page<ErrorMessage>>> {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
 
-    return this.http.get<ApiResponse<Page<ErrorMessageDTO>>>(
-      `${API_ENDPOINTS.MACHINES}/errors`,
+    return this.http.get<ApiResponse<Page<ErrorMessage>>>(
+      `${ApiEndpoints.MACHINES}/errors`,
       {params}
     );
   }
 
   startMachine(machineId: number): Observable<ApiResponse<string>> {
     return this.http.put<ApiResponse<string>>(
-      `${API_ENDPOINTS.MACHINES}/${machineId}/start`,
+      `${ApiEndpoints.MACHINES}/${machineId}/start`,
       null
     );
   }
 
   restartMachine(machineId: number): Observable<ApiResponse<string>> {
     return this.http.put<ApiResponse<string>>(
-      `${API_ENDPOINTS.MACHINES}/${machineId}/restart`,
+      `${ApiEndpoints.MACHINES}/${machineId}/restart`,
       null
     );
   }
 
   stopMachine(machineId: number): Observable<ApiResponse<string>> {
     return this.http.put<ApiResponse<string>>(
-      `${API_ENDPOINTS.MACHINES}/${machineId}/stop`,
+      `${ApiEndpoints.MACHINES}/${machineId}/stop`,
       null
     );
   }
@@ -77,7 +77,7 @@ export class MachineService {
 
   destroyMachine(machineId: number): Observable<ApiResponse<string>> {
     return this.http.put<ApiResponse<string>>(
-      `${API_ENDPOINTS.MACHINES}/${machineId}/destroy`,
+      `${ApiEndpoints.MACHINES}/${machineId}/destroy`,
       null
     );
   }

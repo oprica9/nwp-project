@@ -1,13 +1,13 @@
-export interface MachineDTO {
+import {MachineActions} from "../constants";
+
+export interface Machine {
   id: number;
   name: string;
   status: string;
   createdBy: string;
   active: boolean;
-}
-
-export interface MachineCreateDTO {
-  name: string;
+  allowedActions?: MachineActions[];
+  actionPermissions?: { [key in MachineActions]?: boolean };
 }
 
 export interface SearchParams {
@@ -19,7 +19,7 @@ export interface SearchParams {
   size?: number;
 }
 
-export interface ErrorMessageDTO{
+export interface ErrorMessage {
   timestamp: string;
   machineId: number;
   operation: string;

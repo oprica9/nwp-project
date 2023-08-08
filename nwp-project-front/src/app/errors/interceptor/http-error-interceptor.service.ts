@@ -29,7 +29,6 @@ export class HttpErrorInterceptor implements HttpInterceptor {
             apiError.errorMessage || 'An HTTP error occurred.'
           );
         }
-
         return throwError(() => error);
       })
     );

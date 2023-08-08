@@ -2,10 +2,11 @@ import {Component, OnDestroy} from '@angular/core';
 import {LoginRequest} from "../../model/login-request";
 import {AuthService} from "../../service/auth/auth.service";
 import {Router} from "@angular/router";
-import {TokenService} from "../../service/token/token.service";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {Subscription} from "rxjs";
+import {Observable, Subject, throwError} from "rxjs";
 import {NotificationService} from "../../service/notification/notification.service";
+import {AppRoutes} from "../../constants";
+import {catchError, takeUntil} from "rxjs/operators";
 
 @Component({
   selector: 'app-login',
@@ -13,25 +14,31 @@ import {NotificationService} from "../../service/notification/notification.servi
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnDestroy {
+
+  // Public Fields
   loginForm: FormGroup;
-  private subscriptions: Subscription[] = [];
+
+  // Private Fields
+  private ngUnsubscribe = new Subject<void>();
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
-    private tokenService: TokenService,
     private notifyService: NotificationService,
     private router: Router
   ) {
-    this.loginForm = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
-    });
+    this.loginForm = this._initializeForm();
   }
 
+  // Lifecycle Hooks
+  ngOnDestroy(): void {
+    this.ngUnsubscribe.next();
+    this.ngUnsubscribe.complete();
+  }
+
+  // Public Methods
   login(): void {
     if (this.loginForm.invalid) {
-      // Show error messages or visual cues to the user about invalid fields.
       this.notifyService.showError(`Invalid inputs.`);
       return;
     }
@@ -41,22 +48,34 @@ export class LoginComponent implements OnDestroy {
       password: this.loginForm.value.password
     };
 
-    const subscription = this.authService.login(request).subscribe(
-      () => {
-        this.router.navigate(['/']).catch(error => {
+    this._login(request);
+  }
+
+  // Private Methods
+  private _initializeForm(): FormGroup {
+    return this.formBuilder.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.maxLength(100)]],
+    });
+  }
+
+  private _login(request: LoginRequest) {
+    this.authService.login(request).pipe(
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: _ => {
+        this.router.navigate([`/${AppRoutes.HOME}`]).catch(error => {
           console.error(`Failed to navigate: ${error}`);
         });
       },
-      error => {
-        console.log('Login failed:', error);
-        this.notifyService.showError(`Login failed for unknown reasons.`);
-      }
-    );
-
-    this.subscriptions.push(subscription);
+      error: err => console.error(err)
+    });
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+  // Utility methods or handlers
+  private handleError(message: string, error: any): Observable<never> {
+    this.notifyService.showError(message);
+    return throwError(error);
   }
+
 }

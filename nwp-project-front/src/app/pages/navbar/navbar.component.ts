@@ -1,59 +1,33 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {Subscription} from "rxjs";
+import {Component} from '@angular/core';
 import {AuthService} from "../../service/auth/auth.service";
 import {Router} from "@angular/router";
-import {AuthUser} from "../../model/user";
+import {AppRoutes, UserPermissions} from "../../constants";
 
 @Component({
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
-export class NavbarComponent implements OnInit, OnDestroy {
+export class NavbarComponent {
 
-  currentUser?: AuthUser | null;
-  private subscription: Subscription = new Subscription();
+  // Public Fields
+  UserPermissions = UserPermissions;
 
   constructor(private authService: AuthService, private router: Router) {
-    this.subscription.add(
-      this.authService.currentUser$.subscribe(user => this.currentUser = user)
-    );
   }
 
-  ngOnInit() {
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+  // Public Methods
+  isAuthenticated() {
+    return this.authService.isAuthenticated()
   }
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']).then();
+    this.router.navigate([`/${AppRoutes.LOGIN}`]).then();
   }
 
-  userCanCreate(): boolean {
-    const currentUser = this.currentUser;
-    if (!currentUser) {
-      return false;
-    }
-    return currentUser.permissions.includes('can_create_users');
-  }
-
-  userCanSearchMachines(): boolean {
-    const currentUser = this.currentUser;
-    if (!currentUser) {
-      return false;
-    }
-    return currentUser.permissions.includes('can_search_machines');
-  }
-
-  userCanCreateMachines(): boolean {
-    const currentUser = this.currentUser;
-    if (!currentUser) {
-      return false;
-    }
-    return currentUser.permissions.includes('can_create_machines');
+  userHasPermission(permission: string): boolean {
+    return this.authService.userHasPermission(permission);
   }
 
 }

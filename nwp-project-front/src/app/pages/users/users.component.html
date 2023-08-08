@@ -15,7 +15,7 @@
       <!-- Table rows remain the same -->
       <tr
         *ngFor="let user of users | paginate: { id: 'users', itemsPerPage: size, currentPage: page, totalItems: totalUsers }"
-        [ngClass]="{'clickable-row': canUpdateUsers()}"
+        [ngClass]="{'clickable-row': userHasPermission(UserPermissions.CAN_UPDATE_USERS)}"
         (click)="handleRowClick(user.id)"
         (mousedown)="onMouseDown()"
         (mouseup)="onMouseUp()"
@@ -24,16 +24,18 @@
         <td>{{user.firstName}}</td>
         <td>{{user.lastName}}</td>
         <td>
-          <a *ngIf="canUpdateUsers()" href="mailto:{{user.email}}" (click)="$event.stopPropagation()" class="email-link">
+          <a *ngIf="userHasPermission(UserPermissions.CAN_UPDATE_USERS)" href="mailto:{{user.email}}"
+             (click)="$event.stopPropagation()" class="email-link">
             {{user.email}}
           </a>
-          <span *ngIf="!canUpdateUsers()" class="disabled-link">
+          <span *ngIf="!userHasPermission(UserPermissions.CAN_UPDATE_USERS)" class="disabled-link">
               {{user.email}}
             </span>
         </td>
         <td>{{getPermissions(user.permissions)}}</td>
         <td>
-          <button class="btn btn-danger" *ngIf="userCanDelete()" (click)="$event.stopPropagation(); onDeleteClick(user.id)">
+          <button class="btn btn-danger" *ngIf="userHasPermission(UserPermissions.CAN_DELETE_USERS)"
+                  (click)="$event.stopPropagation(); onDeleteClick(user.id)">
             Delete
           </button>
         </td>

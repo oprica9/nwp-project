@@ -1,14 +1,14 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup} from '@angular/forms';
 import {MachineService} from "../../service/machine/machine.service";
-import {MachineDTO} from "../../model/machine";
+import {Machine} from "../../model/model.machine";
 import {NotificationService} from "../../service/notification/notification.service";
-import {SearchParams} from '../../model/machine';
+import {SearchParams} from '../../model/model.machine';
 import {catchError, takeUntil} from "rxjs/operators";
-import {Subject, tap, throwError} from 'rxjs';
+import {Observable, Subject, throwError} from 'rxjs';
 import {WebsocketService} from "../../service/websocket/websocket.service";
-import {AuthUser} from "../../model/user";
 import {AuthService} from "../../service/auth/auth.service";
+import {MachineActions, MachineStates, UserPermissions} from "../../constants";
 
 @Component({
   selector: 'app-machine-search',
@@ -17,20 +17,112 @@ import {AuthService} from "../../service/auth/auth.service";
 })
 export class MachineSearchComponent implements OnInit, OnDestroy {
 
-  currentUser?: AuthUser | null;
-
-  public form: FormGroup;
-  machines: MachineDTO[] = [];
+  // Public Fields
+  form: FormGroup;
+  machines: Machine[] = [];
   availableStatuses: string[] = [];
   totalMachines: number = 0;
   page: number = 1;
   size: number = 10;
+  MachineActions = MachineActions;
+
+  // Private Fields
   private ngUnsubscribe = new Subject<void>();
+  private actionMap: { [key in MachineActions]: MachineStates } = {
+    [MachineActions.START]: MachineStates.STOPPED,
+    [MachineActions.STOP]: MachineStates.RUNNING,
+    [MachineActions.RESTART]: MachineStates.RUNNING,
+    [MachineActions.DESTROY]: MachineStates.STOPPED
+  };
 
-  actionInProgress: Map<number, boolean>;
+  constructor(
+    private formBuilder: FormBuilder,
+    private machineService: MachineService,
+    private notifyService: NotificationService,
+    private websocketService: WebsocketService,
+    private authService: AuthService
+  ) {
+    this.form = this._initializeForm();
+  }
 
-  constructor(private fb: FormBuilder, private machineService: MachineService, private notifyService: NotificationService, private websocketService: WebsocketService, private authService: AuthService) {
-    this.form = this.fb.group({
+  // Lifecycle Hooks
+  ngOnInit(): void {
+    this.websocketService.connect();
+
+    this.websocketService.messages.pipe(
+      catchError(this._handleError.bind(this, 'An unknown error occurred.')),
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: response => {
+        if (response) {
+          const updatedMachine: Machine = response;
+          const index = this.machines.findIndex((machine) => machine.id === updatedMachine.id);
+          if (index !== -1) {
+            this.machines[index] = updatedMachine;
+            this._evaluateActionsForMachine(this.machines[index]);
+          }
+        }
+      },
+      error: err => console.error(err)
+    });
+
+    this.searchMachines();
+    this._fetchAvailableStatuses();
+  }
+
+  ngOnDestroy(): void {
+    this.websocketService.disconnect()
+    this.ngUnsubscribe.next();
+    this.ngUnsubscribe.complete();
+  }
+
+  // Public Methods
+  searchMachines(): void {
+    const searchParams: Partial<SearchParams> = this._buildSearchParams();
+    this._executeMachineSearch(searchParams);
+  }
+
+  pageChanged(event: any): void {
+    this.page = event;
+    this.searchMachines();
+  }
+
+  // Event Handlers
+  startMachine(machineId: number) {
+    this._executeMachineAction(
+      UserPermissions.CAN_START_MACHINES,
+      'Machine is starting.',
+      () => this.machineService.startMachine(machineId)
+    );
+  }
+
+  restartMachine(machineId: number) {
+    this._executeMachineAction(
+      UserPermissions.CAN_RESTART_MACHINES,
+      'Machine is restarting.',
+      () => this.machineService.restartMachine(machineId)
+    );
+  }
+
+  stopMachine(machineId: number) {
+    this._executeMachineAction(
+      UserPermissions.CAN_STOP_MACHINES,
+      'Machine is stopping.',
+      () => this.machineService.stopMachine(machineId)
+    );
+  }
+
+  destroyMachine(machineId: number) {
+    this._executeMachineAction(
+      UserPermissions.CAN_DESTROY_MACHINES,
+      'Machine successfully destroyed.',
+      () => this.machineService.destroyMachine(machineId)
+    );
+  }
+
+  // Private Methods
+  private _initializeForm(): FormGroup {
+    return this.formBuilder.group({
       name: [''],
       statuses: [[]],
       dateFrom: [''],
@@ -38,84 +130,77 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
       page: [0],
       size: [10]
     });
-    this.actionInProgress = new Map();
-    this.authService.currentUser$.subscribe(user => this.currentUser = user);
   }
 
-  ngOnInit(): void {
-    // Wait until the WebSocket connection is established before subscribing to messages
-    this.websocketService.connect();
+  private _executeMachineSearch(params: SearchParams): void {
+    this.machineService.searchMachines(params).pipe(
+      catchError(this._handleError.bind(this, 'An unknown error occurred.')),
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: response => {
+        this.machines = response.data.content;
+        this.totalMachines = response.data.totalElements;
+        this._populateAvailableActions();
+      },
+      error: err => console.error(err)
+    });
+  }
 
-    this.websocketService.messages.subscribe(message => {
-      if (message) {
-        console.log(message)
-        const updatedMachine: MachineDTO = message;
-        const index = this.machines.findIndex((machine) => machine.id === updatedMachine.id);
-        if (index !== -1) {
-          this.machines[index] = updatedMachine;
-          if (this.mainMachineStatuses.includes(updatedMachine.status)) {
-            this.actionInProgress.set(updatedMachine.id, false);
+  private _executeMachineAction(requiredPermission: UserPermissions, successMessage: string, action: () => Observable<any>) {
+    if (!this.authService.isAuthenticated()) {
+      this.notifyService.showError('User is not authenticated.');
+      return;
+    }
+    if (!this.authService.userHasPermission(requiredPermission)) {
+      this.notifyService.showError(`You do not have permission to perform this action on machines.`);
+      return;
+    }
+    action()
+      .pipe(
+        catchError(this._handleError.bind(this, 'Failed to perform the action on the machine.')),
+        takeUntil(this.ngUnsubscribe))
+      .subscribe({
+        next: _ => {
+          this.notifyService.showSuccess(successMessage);
+          this.searchMachines();
+        },
+        error: err => console.error(err)
+      });
+  }
+
+  private _fetchAvailableStatuses(): void {
+    this.machineService.getAvailableStatuses()
+      .pipe(
+        catchError(this._handleError.bind(this, 'Failed to fetch available statuses.')),
+        takeUntil(this.ngUnsubscribe))
+      .subscribe({
+        next: next => {
+          this.availableStatuses = next.data;
+          for (let string of this.availableStatuses) {
+            this.form.addControl(string, this.formBuilder.control(false));
           }
+        },
+        error: err => console.error(err)
+      });
+  }
+
+  private _populateAvailableActions() {
+    this.machines.forEach(machine => {
+      machine.allowedActions = [];
+      machine.actionPermissions = {};  // Initialize the map
+
+      for (let action in this.actionMap) {
+        const isAllowed = this.actionMap[action as MachineActions] === machine.status;
+        machine.actionPermissions[action as MachineActions] = isAllowed;
+
+        if (isAllowed) {
+          machine.allowedActions.push(action as MachineActions);
         }
       }
     });
-    this.searchMachines();
-    this.fetchAvailableStatuses();
   }
 
-  pageChanged(event: any): void {
-    console.log(event)
-    this.page = event;
-    this.searchMachines();
-  }
-
-  ngOnDestroy(): void {
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
-    this.actionInProgress.clear();
-  }
-
-  fetchAvailableStatuses(): void {
-    this.machineService.getAvailableStatuses()
-      .pipe(takeUntil(this.ngUnsubscribe))
-      .subscribe(
-        (response) => {
-          this.availableStatuses = response.data;
-
-          // add a new form control for each permission
-          for (let string of this.availableStatuses) {
-            this.form.addControl(string, this.fb.control(false));
-          }
-        },
-        (error) => {
-          console.error(error);
-          this.notifyService.showError('Failed to fetch available statuses.');
-        }
-      );
-  }
-
-  searchMachines(): void {
-    const searchParams: Partial<SearchParams> = this.buildSearchParams();
-
-    this.machineService.searchMachines(searchParams).pipe(
-      tap(response => {
-        this.machines = response.data.content;
-        this.totalMachines = response.data.totalElements;
-        this.populateMAvailableActions();
-      }),
-      catchError(error => {
-        this.notifyService.showError('An unknown error occurred.');
-        return throwError(error);  // Re-throw the error if you want to keep the error chain
-      })
-    ).subscribe({
-      next: () => {
-      },  // handle next value, if needed
-      error: err => console.error(err),  // handle error
-    });
-
-  }
-
-  private buildSearchParams(): Partial<SearchParams> {
+  private _buildSearchParams(): Partial<SearchParams> {
     let statusesList: string[] = [];
     for (const status of this.availableStatuses) {
       if ((this.form.controls as { [key: string]: any })[status].value) {
@@ -126,169 +211,25 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
     return {
       name: formValue.name,
       statuses: statusesList,
-      dateFrom: formValue.dateFrom, // We'll use string to hold the date-time data in ISO 8601 format
-      dateTo: formValue.dateTo, // We'll use string to hold the date-time data in ISO 8601 format
+      // Date-time data in ISO 8601 format
+      dateFrom: formValue.dateFrom,
+      dateTo: formValue.dateTo,
       page: this.page - 1,
       size: this.size
     };
   }
 
-  startMachine(machineId: number) {
-    const currentUser = this.currentUser;
-
-    if (!currentUser) {
-      this.notifyService.showError('User is not authenticated.');
-      return;
+  private _evaluateActionsForMachine(machine: Machine): void {
+    machine.actionPermissions = machine.actionPermissions || {};
+    for (let action in this.actionMap) {
+      machine.actionPermissions[action as MachineActions] = this.actionMap[action as MachineActions] === machine.status;
     }
-
-    const userPermissions = currentUser.permissions || [];
-
-    if (!userPermissions.includes('can_start_machines')) {
-      this.notifyService.showError('You do not have permission to start machines.');
-      return;
-    }
-
-    this.machineService.startMachine(machineId).pipe(
-      tap(() => {
-        this.actionInProgress.set(machineId, true);
-        this.notifyService.showSuccess('Machine is starting.');
-        this.searchMachines();  // Fetch users again to update the list
-      }),
-      catchError((error) => {
-        this.notifyService.showError('Failed to start the machine.');
-        throw error;  // If you want to continue the error chain
-      })
-    ).subscribe({
-      next: () => {
-      },  // handle next value, if needed
-      error: err => console.error(err),  // handle error
-    });
   }
 
-  restartMachine(machineId: number) {
-    const currentUser = this.currentUser;
-
-    if (!currentUser) {
-      this.notifyService.showError('User is not authenticated.');
-      return;
-    }
-
-    const userPermissions = currentUser.permissions || [];
-
-    if (!userPermissions.includes('can_restart_machines')) {
-      this.notifyService.showError('You do not have permission to restart machines.');
-      return;
-    }
-
-    this.machineService.restartMachine(machineId).pipe(
-      tap(() => {
-        this.actionInProgress.set(machineId, true);
-        this.notifyService.showSuccess('Machine is restarting.');
-        this.searchMachines();  // Fetch users again to update the list
-      }),
-      catchError((error) => {
-        this.notifyService.showError('Failed to restart the machine.');
-        throw error;  // If you want to continue the error chain
-      })
-    ).subscribe({
-      next: () => {
-      },  // handle next value, if needed
-      error: err => console.error(err),  // handle error
-    });
+  // Utility methods or handlers
+  private _handleError(message: string, error: any): Observable<never> {
+    this.notifyService.showError(message);
+    return throwError(error);
   }
 
-  stopMachine(machineId: number) {
-    const currentUser = this.currentUser;
-
-    if (!currentUser) {
-      this.notifyService.showError('User is not authenticated.');
-      return;
-    }
-
-    const userPermissions = currentUser.permissions || [];
-
-    if (!userPermissions.includes('can_stop_machines')) {
-      this.notifyService.showError('You do not have permission to stop machines.');
-      return;
-    }
-
-    this.machineService.stopMachine(machineId).pipe(
-      tap(() => {
-        this.actionInProgress.set(machineId, true);
-        this.notifyService.showSuccess('Machine is stopping.');
-        this.searchMachines();  // Fetch users again to update the list
-      }),
-      catchError((error) => {
-        this.notifyService.showError('Failed to stop the machine.');
-        throw error;  // If you want to continue the error chain
-      })
-    ).subscribe({
-      next: () => {
-      },  // handle next value, if needed
-      error: err => console.error(err),  // handle error
-    });
-  }
-
-  mainMachineStatuses: string[] = ['RUNNING', 'STOPPED'];
-
-  actionAllowed(status: string, action: string): boolean {
-    if (action == "START") {
-      if (status == 'STOPPED') {
-        return true;
-      }
-    } else if (action == "STOP") {
-      if (status == 'RUNNING') {
-        return true;
-      }
-    } else if (action == "RESTART") {
-      if (status == 'RUNNING') {
-        return true;
-      }
-    } else if (action == "DESTROY") {
-      if (status == 'STOPPED') {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private populateMAvailableActions() {
-    this.machines.forEach(machine => {
-      if (!this.mainMachineStatuses.includes(machine.status)) {
-        this.actionInProgress.set(machine.id, true);
-      }
-    })
-  }
-
-  destroyMachine(machineId: number) {
-    const currentUser = this.currentUser;
-
-    if (!currentUser) {
-      this.notifyService.showError('User is not authenticated.');
-      return;
-    }
-
-    const userPermissions = currentUser.permissions || [];
-
-    if (!userPermissions.includes('can_destroy_machines')) {
-      this.notifyService.showError('You do not have permission to destroy machines.');
-      return;
-    }
-
-    this.machineService.destroyMachine(machineId).pipe(
-      tap(() => {
-        this.actionInProgress.set(machineId, true);
-        this.notifyService.showSuccess('Machine successfully destroyed.');
-        this.searchMachines();  // Fetch users again to update the list
-      }),
-      catchError((error) => {
-        this.notifyService.showError('Failed to destroy the machine.');
-        throw error;  // If you want to continue the error chain
-      })
-    ).subscribe({
-      next: () => {
-      },  // handle next value, if needed
-      error: err => console.error(err),  // handle error
-    });
-  }
 }

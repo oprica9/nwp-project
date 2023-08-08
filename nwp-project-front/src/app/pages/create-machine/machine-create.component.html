@@ -8,9 +8,13 @@
             <div class="form-group">
               <label for="machineName">Machine Name:</label>
               <input type="text" id="machineName" formControlName="machineName" class="form-control" required>
+              <div
+                *ngIf="form.get('machineName')?.invalid && (form.get('machineName')?.dirty || form.get('machineName')?.touched)">
+                <div *ngIf="form.get('machineName')?.errors?.required">Machine name is required.</div>
+              </div>
             </div>
             <div class="form-group">
-              <button type="submit" class="btn btn-primary mt-3">Create</button>
+              <button type="submit" class="btn btn-primary mt-3" [disabled]="form.invalid">Create</button>
             </div>
           </form>
         </div>

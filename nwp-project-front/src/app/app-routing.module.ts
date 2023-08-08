@@ -11,42 +11,48 @@ import {HomeComponent} from "./pages/home/home.component";
 import {MachineSearchComponent} from './pages/machine-search/machine-search.component';
 import {MachineCreateComponent} from "./pages/create-machine/machine-create.component";
 import {MachineErrorsComponent} from "./pages/machine-errors/machine-errors.component";
+import {AppRoutes, UserPermissions} from "./constants";
+import {UserResolver} from "./resolvers/user.resolver";
 
 const routes: Routes = [
-  {path: '', component: HomeComponent, canActivate: [AuthGuard]},
-  {path: 'login', component: LoginComponent, canActivate: [LoginGuard]},
+  {path: AppRoutes.HOME, component: HomeComponent, canActivate: [AuthGuard]},
+  {path: AppRoutes.LOGIN, component: LoginComponent, canActivate: [LoginGuard]},
   {
-    path: 'users',
+    path: AppRoutes.USERS,
     component: UsersComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: {requiredPermission: 'can_read_users'}
+    data: {requiredPermission: UserPermissions.CAN_READ_USERS}
   },
   {
-    path: 'add-user',
+    path: AppRoutes.ADD_USER,
     component: AddUserComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: {requiredPermission: 'can_create_users'}
+    data: {requiredPermission: UserPermissions.CAN_CREATE_USERS}
   },
   {
-    path: 'edit-user/:id',
+    path: `${AppRoutes.EDIT_USER}/:id`,
     component: EditUserComponent,
+    resolve: {
+      user: UserResolver,
+      permissions: UserResolver
+    },
     canActivate: [AuthGuard, PermissionGuard],
-    data: {requiredPermission: 'can_update_users'}
+    data: {requiredPermission: UserPermissions.CAN_UPDATE_USERS}
   },
   {
-    path: 'machine-search',
+    path: AppRoutes.MACHINE_SEARCH,
     component: MachineSearchComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: {requiredPermission: 'can_search_machines'}
+    data: {requiredPermission: UserPermissions.CAN_SEARCH_MACHINES}
   },
   {
-    path: 'machine-create',
+    path: AppRoutes.MACHINE_CREATE,
     component: MachineCreateComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: {requiredPermission: 'can_create_machines'}
+    data: {requiredPermission: UserPermissions.CAN_CREATE_MACHINES}
   },
   {
-    path: 'machine-errors',
+    path: AppRoutes.MACHINE_ERRORS,
     component: MachineErrorsComponent,
     canActivate: [AuthGuard]
   },

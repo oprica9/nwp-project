@@ -1,10 +1,12 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {User, Permission, UserUpdateDTO} from '../../model/user';
-import {API_ENDPOINTS} from '../../constants';
+import {Permission, User} from '../../model/model.user';
+import {ApiEndpoints} from '../../constants';
 import {ApiResponse} from "../../model/api-response";
 import {Page} from "../../model/page";
+import {UserCreateDTO, UserUpdateDTO} from "../../model/dto.user";
+import {Machine} from "../../model/model.machine";
 
 @Injectable({
   providedIn: 'root'
@@ -19,27 +21,27 @@ export class UserService {
       .set('page', page.toString())
       .set('size', size.toString());
 
-    return this.http.get<ApiResponse<Page<User>>>(`${API_ENDPOINTS.USERS}`, {params});
+    return this.http.get<ApiResponse<Page<User>>>(`${ApiEndpoints.USERS}`, {params});
   }
 
   getUserById(id: number): Observable<ApiResponse<User>> {
-    return this.http.get<ApiResponse<User>>(`${API_ENDPOINTS.USERS}/${id}`);
+    return this.http.get<ApiResponse<User>>(`${ApiEndpoints.USERS}/${id}`);
   }
 
   updateUser(id: number, user: UserUpdateDTO): Observable<ApiResponse<User>> {
-    return this.http.put<ApiResponse<User>>(`${API_ENDPOINTS.USERS}/${id}`, user);
+    return this.http.put<ApiResponse<User>>(`${ApiEndpoints.USERS}/${id}`, user);
   }
 
-  createUser(user: Partial<User>): Observable<ApiResponse<User>> {
-    return this.http.post<ApiResponse<User>>(`${API_ENDPOINTS.USERS}/create`, user);
+  createUser(user: UserCreateDTO): Observable<ApiResponse<User>> {
+    return this.http.post<ApiResponse<User>>(`${ApiEndpoints.USERS}/create`, user);
   }
 
   deleteUser(id: number): Observable<ApiResponse<string>> {
-    return this.http.delete<ApiResponse<string>>(`${API_ENDPOINTS.USERS}/${id}`);
+    return this.http.delete<ApiResponse<string>>(`${ApiEndpoints.USERS}/${id}`);
   }
 
   getAvailablePermissions(): Observable<ApiResponse<Permission[]>> {
-    return this.http.get<ApiResponse<Permission[]>>(`${API_ENDPOINTS.PERMISSIONS}`);
+    return this.http.get<ApiResponse<Permission[]>>(`${ApiEndpoints.PERMISSIONS}`);
   }
 
 }

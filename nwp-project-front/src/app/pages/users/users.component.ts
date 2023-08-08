@@ -1,106 +1,80 @@
-import {Component, HostListener, OnInit} from '@angular/core';
+import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
-import {AuthUser, User} from '../../model/user';
 import {UserService} from '../../service/user/user.service';
 import {NotificationService} from "../../service/notification/notification.service";
 import {AuthService} from "../../service/auth/auth.service";
-import {tap, throwError} from "rxjs";
-import {catchError} from "rxjs/operators";
+import {Observable, Subject, throwError} from "rxjs";
+import {catchError, takeUntil} from "rxjs/operators";
+import {AppRoutes, UserPermissions} from "../../constants";
+import {User} from "../../model/model.user";
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
 })
-export class UsersComponent implements OnInit {
+export class UsersComponent implements OnInit, OnDestroy {
 
-  currentUser?: AuthUser | null;
-
+  // Public Fields
   users: User[] = [];
   totalUsers: number = 0;
   page: number = 1;
   size: number = 10;
-  clickFlag = false;
-  clickDragFlag = false;
+  UserPermissions = UserPermissions;
 
-  constructor(private userService: UserService, private router: Router, private notifyService: NotificationService, private authService: AuthService) {
-    this.authService.currentUser$.subscribe(user => this.currentUser = user);
+  // Private Fields
+  private clickFlag = false;
+  private clickDragFlag = false;
+  private ngUnsubscribe = new Subject<void>();
+
+  constructor(private userService: UserService,
+              private router: Router,
+              private notifyService: NotificationService,
+              private authService: AuthService
+  ) {
   }
 
+  // Lifecycle Hooks
   ngOnInit(): void {
-    this.fetchUsers();
+    this._fetchUsers();
   }
 
-  fetchUsers(): void {
-    this.userService.fetchUsers(this.page - 1, this.size).pipe(
-      tap(response => {
-        this.users = response.data.content;
-        this.totalUsers = response.data.totalElements;
-      }),
-      catchError(error => {
-        this.notifyService.showError('An unknown error occurred.');
-        return throwError(error);  // Re-throw the error if you want to keep the error chain
-      })
-    ).subscribe({
-      next: () => {
-      },  // handle next value, if needed
-      error: err => console.error(err),  // handle error
-    });
+  ngOnDestroy(): void {
+    this.ngUnsubscribe.next();
+    this.ngUnsubscribe.complete();
   }
 
+  // Public Methods
   getPermissions(permissions: any[]): string {
     return permissions.map(p => p.name).join(', ');
   }
 
   pageChanged(event: any): void {
-    console.log(event)
     this.page = event;
-    this.fetchUsers();
+    this._fetchUsers();
   }
 
-  onUserClick(id: number): void {
-    this.router.navigate(['/edit-user', id]).then();
+  userHasPermission(permission: string): boolean {
+    return this.authService.userHasPermission(permission);
   }
 
-  userCanDelete(): boolean {
-    const userPermissions = this.currentUser?.permissions || [];
-    return userPermissions.includes('can_delete_users');
+  handleRowClick(id: number): void {
+    if (this.userHasPermission(UserPermissions.CAN_UPDATE_USERS) && !this.clickDragFlag) {
+      this._onUserClick(id);
+    }
   }
 
+  // Event Handlers
   onDeleteClick(id: number): void {
-    const currentUser = this.currentUser;
-
-    if (!currentUser) {
+    if (!this.authService.isAuthenticated()) {
       this.notifyService.showError('User is not authenticated.');
       return;
     }
-
-    const userPermissions = currentUser.permissions || [];
-
-    if (!userPermissions.includes('can_delete_users')) {
+    if (!this.authService.userHasPermission(UserPermissions.CAN_DELETE_USERS)) {
       this.notifyService.showError('You do not have permission to delete users.');
       return;
     }
-
-    this.userService.deleteUser(id).pipe(
-      tap(() => {
-        this.notifyService.showSuccess('User deleted successfully.');
-        this.fetchUsers();  // Fetch users again to update the list
-      }),
-      catchError((error) => {
-        this.notifyService.showError('Failed to delete user.');
-        throw error;  // If you want to continue the error chain
-      })
-    ).subscribe({
-      next: () => {
-      },  // handle next value, if needed
-      error: err => console.error(err),  // handle error
-    });
-  }
-
-  canUpdateUsers(): boolean {
-    const userPermissions = this.currentUser?.permissions || [];
-    return userPermissions.includes('can_update_users');
+    this._deleteUser(id);
   }
 
   onMouseDown(): void {
@@ -125,9 +99,41 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  handleRowClick(id: number): void {
-    if (this.canUpdateUsers() && !this.clickDragFlag) {
-      this.onUserClick(id);
-    }
+  // Private Methods
+  private _fetchUsers(): void {
+    this.userService.fetchUsers(this.page - 1, this.size).pipe(
+      catchError(this._handleError.bind(this, 'An unknown error occurred.')),
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: response => {
+        this.users = response.data.content;
+        this.totalUsers = response.data.totalElements;
+      },
+      error: err => console.error(err)
+    });
   }
+
+  private _onUserClick(id: number): void {
+    this.router.navigate([AppRoutes.EDIT_USER, id]).then();
+  }
+
+  private _deleteUser(id: number) {
+    this.userService.deleteUser(id).pipe(
+      catchError(this._handleError.bind(this, 'Failed to delete user.')),
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: () => {
+        this.notifyService.showSuccess('User deleted successfully.');
+        this._fetchUsers();
+      },
+      error: err => console.error(err)
+    });
+  }
+
+  // Utility methods or handlers
+  private _handleError(message: string, error: any): Observable<never> {
+    this.notifyService.showError(message);
+    return throwError(error);
+  }
+
 }
