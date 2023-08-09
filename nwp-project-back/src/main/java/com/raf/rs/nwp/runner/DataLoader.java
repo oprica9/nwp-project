@@ -69,6 +69,10 @@ public class DataLoader {
             can_destroy_machines.setName("can_destroy_machines");
             permissionRepository.save(can_destroy_machines);
 
+            Permission can_read_machine_errors = new Permission();
+            can_read_machine_errors.setName("can_read_machine_errors");
+            permissionRepository.save(can_read_machine_errors);
+
             // Create users
             User user1 = new User();
             user1.setEmail("admin@gmail.com");
@@ -87,6 +91,7 @@ public class DataLoader {
             addPermissionToUser(user1, can_restart_machines);
             addPermissionToUser(user1, can_create_machines);
             addPermissionToUser(user1, can_destroy_machines);
+            addPermissionToUser(user1, can_read_machine_errors);
 
             User user2 = new User();
             user2.setEmail("user@gmail.com");

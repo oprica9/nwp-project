@@ -67,7 +67,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 ZonedDateTime.now(),
                 ex.getMessage(),
                 ErrorCode.RESOURCE_ALREADY_EXISTS);
-        return new ResponseEntity<>(apiErrorResponse, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(MachineException.class)

@@ -62,12 +62,13 @@ public class SecurityConfig {
 
         // Authorize http requests - machines
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers(match(GET, "/api/machines/search", "/api/machines/statuses", "/api/machines/errors")).hasAuthority("can_search_machines")
+                .requestMatchers(match(GET, "/api/machines/search", "/api/machines/statuses")).hasAuthority("can_search_machines")
                 .requestMatchers(match(POST, "/api/machines/create")).hasAuthority("can_create_machines")
                 .requestMatchers(match(PUT, "/api/machines/start/*", "/api/machines/*/schedule-start")).hasAuthority("can_start_machines")
                 .requestMatchers(match(PUT, "/api/machines/stop/*", "/api/machines/*/schedule-stop")).hasAuthority("can_stop_machines")
                 .requestMatchers(match(PUT, "/api/machines/restart/*", "/api/machines/*/schedule-restart")).hasAuthority("can_restart_machines")
-                .requestMatchers(match(DELETE, "/api/machines/*")).hasAuthority("can_destroy_machines"));
+                .requestMatchers(match(DELETE, "/api/machines/*")).hasAuthority("can_destroy_machines")
+                .requestMatchers(match(DELETE, "/api/machines/errors")).hasAuthority("can_read_machine_errors"));
 
         // Authorize http requests - web sockets
         http.authorizeHttpRequests(auth -> auth
