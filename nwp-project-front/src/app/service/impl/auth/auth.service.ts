@@ -85,10 +85,7 @@ export class AuthService {
   }
 
   userHasAnyPermission(): boolean {
-    console.log("entered")
     const currentUser = this.currentUserSubject.value;
-
-    console.log(currentUser)
 
     return currentUser?.permissions.some(permission => {
       const userPermissionValue = Object.values(UserPermissions).find(val => val === permission);

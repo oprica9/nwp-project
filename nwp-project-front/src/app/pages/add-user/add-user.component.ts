@@ -74,8 +74,7 @@ export class AddUserComponent extends BaseComponent {
         for (let permission of this.availablePermissions) {
           this.form.addControl(permission.name, this.formBuilder.control(false));
         }
-      },
-      error: err => console.log(err)
+      }
     });
   }
 
@@ -102,8 +101,7 @@ export class AddUserComponent extends BaseComponent {
       next: next => {
         this.notifyService.showSuccess(`User ${next.data.firstName} ${next.data.lastName} created successfully.`);
         this.router.navigate([`/${AppRoutes.USERS}`]).then();
-      },
-      error: err => console.log(err)
+      }
     });
   }
 

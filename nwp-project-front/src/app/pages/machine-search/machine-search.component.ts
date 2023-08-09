@@ -87,7 +87,6 @@ export class MachineSearchComponent extends BaseComponent {
   }
 
   userHasPermission(permission: string): boolean {
-    console.log("check");
     return this.authService.userHasPermission(permission);
   }
 
