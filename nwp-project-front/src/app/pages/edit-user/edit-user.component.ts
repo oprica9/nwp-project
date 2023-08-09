@@ -1,42 +1,46 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {UserService} from '../../service/user/user.service';
+import {UserService} from '../../service/impl/user/user.service';
 import {Permission, User} from '../../model/model.user';
-import {NotificationService} from '../../service/notification/notification.service';
-import {Observable, Subject, throwError} from 'rxjs';
-
-import {catchError, takeUntil} from 'rxjs/operators';
+import {NotificationService} from '../../service/impl/notification/notification.service';
+import {takeUntil} from 'rxjs/operators';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {AppRoutes} from "../../constants";
+import {AppRoutes, UserPermissions} from "../../constants";
 import {UserUpdateDTO} from "../../model/dto.user";
+import {ErrorHandlerService} from "../../errors/service/error-handler.service";
+import {BaseComponent} from "../../base-components/base/base.component";
+import {AuthService} from "../../service/impl/auth/auth.service";
 
 @Component({
   selector: 'app-edit-user',
   templateUrl: './edit-user.component.html',
   styleUrls: ['./edit-user.component.css'],
 })
-export class EditUserComponent implements OnInit, OnDestroy {
+export class EditUserComponent extends BaseComponent {
 
   // Public Fields
   form: FormGroup;
   availablePermissions: Permission[] = [];
 
   // Private Fields
-  private ngUnsubscribe = new Subject<void>();
   private userId: number = -1;
 
   constructor(
     private userService: UserService,
+    private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router,
-    private notifyService: NotificationService,
     private formBuilder: FormBuilder,
+    protected errorService: ErrorHandlerService,
+    protected notifyService: NotificationService
   ) {
+    super(errorService, notifyService)
     this.form = this._initializeForm();
   }
 
   // Lifecycle Hooks
   ngOnInit(): void {
+    super.ngOnInit();
     // Extract the resolved data
     const userData: User = this.route.snapshot.data['user'][0];
     const permissionsData: Permission[] = this.route.snapshot.data['permissions'][1];
@@ -46,18 +50,17 @@ export class EditUserComponent implements OnInit, OnDestroy {
       this.userId = userData.id;
       this.availablePermissions = permissionsData;
       this._updateFormValues(userData);
-    }else{
+    } else {
       this.notifyService.showError('Unknown error occurred when getting the user data');
       return;
     }
   }
 
-  ngOnDestroy(): void {
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
+  // Public Methods
+  isFieldInvalid(controlName: string): boolean {
+    return this.isFormControlInvalid(this.form, controlName);
   }
 
-  // Public Methods
   updateUser(): void {
     if (!this.form.valid) {
       this.notifyService.showError('Form is not valid. Please check the inputs.');
@@ -115,8 +118,7 @@ export class EditUserComponent implements OnInit, OnDestroy {
 
   private _updateUser(userUpdateDTO: UserUpdateDTO) {
     this.userService.updateUser(this.userId, userUpdateDTO).pipe(
-      catchError(this._handleError.bind(this, 'Failed to update user details.')),
-      takeUntil(this.ngUnsubscribe)
+      takeUntil(this.unsubscribeSignal$)
     ).subscribe({
       next: _ => {
         this.notifyService.showSuccess('User details updated successfully.');
@@ -124,11 +126,5 @@ export class EditUserComponent implements OnInit, OnDestroy {
       },
       error: err => console.error(err)
     });
-  }
-
-  // Utility methods or handlers
-  private _handleError(message: string, error: any): Observable<never> {
-    this.notifyService.showError(message);
-    return throwError(error);
   }
 }

@@ -36,7 +36,7 @@ import {HttpErrorInterceptor} from './errors/interceptor/http-error-interceptor.
     HomeComponent,
     MachineSearchComponent,
     MachineCreateComponent,
-    MachineErrorsComponent
+    MachineErrorsComponent,
   ],
   imports: [
     BrowserModule,

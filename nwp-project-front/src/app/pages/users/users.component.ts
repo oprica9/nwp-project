@@ -1,19 +1,20 @@
-import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import {Component, HostListener} from '@angular/core';
 import {Router} from '@angular/router';
-import {UserService} from '../../service/user/user.service';
-import {NotificationService} from "../../service/notification/notification.service";
-import {AuthService} from "../../service/auth/auth.service";
-import {Observable, Subject, throwError} from "rxjs";
-import {catchError, takeUntil} from "rxjs/operators";
+import {UserService} from '../../service/impl/user/user.service';
+import {NotificationService} from "../../service/impl/notification/notification.service";
+import {AuthService} from "../../service/impl/auth/auth.service";
+import {takeUntil} from "rxjs/operators";
 import {AppRoutes, UserPermissions} from "../../constants";
 import {User} from "../../model/model.user";
+import {ErrorHandlerService} from "../../errors/service/error-handler.service";
+import {BaseComponent} from "../../base-components/base/base.component";
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
 })
-export class UsersComponent implements OnInit, OnDestroy {
+export class UsersComponent extends BaseComponent {
 
   // Public Fields
   users: User[] = [];
@@ -25,23 +26,20 @@ export class UsersComponent implements OnInit, OnDestroy {
   // Private Fields
   private clickFlag = false;
   private clickDragFlag = false;
-  private ngUnsubscribe = new Subject<void>();
 
   constructor(private userService: UserService,
               private router: Router,
-              private notifyService: NotificationService,
-              private authService: AuthService
+              private authService: AuthService,
+              protected errorService: ErrorHandlerService,
+              protected notifyService: NotificationService
   ) {
+    super(errorService, notifyService);
   }
 
   // Lifecycle Hooks
   ngOnInit(): void {
+    super.ngOnInit();
     this._fetchUsers();
-  }
-
-  ngOnDestroy(): void {
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
   }
 
   // Public Methods
@@ -64,16 +62,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Event Handlers
   onDeleteClick(id: number): void {
-    if (!this.authService.isAuthenticated()) {
-      this.notifyService.showError('User is not authenticated.');
-      return;
-    }
-    if (!this.authService.userHasPermission(UserPermissions.CAN_DELETE_USERS)) {
-      this.notifyService.showError('You do not have permission to delete users.');
-      return;
-    }
     this._deleteUser(id);
   }
 
@@ -102,8 +91,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   // Private Methods
   private _fetchUsers(): void {
     this.userService.fetchUsers(this.page - 1, this.size).pipe(
-      catchError(this._handleError.bind(this, 'An unknown error occurred.')),
-      takeUntil(this.ngUnsubscribe)
+      takeUntil(this.unsubscribeSignal$)
     ).subscribe({
       next: response => {
         this.users = response.data.content;
@@ -119,8 +107,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   private _deleteUser(id: number) {
     this.userService.deleteUser(id).pipe(
-      catchError(this._handleError.bind(this, 'Failed to delete user.')),
-      takeUntil(this.ngUnsubscribe)
+      takeUntil(this.unsubscribeSignal$)
     ).subscribe({
       next: () => {
         this.notifyService.showSuccess('User deleted successfully.');
@@ -129,11 +116,4 @@ export class UsersComponent implements OnInit, OnDestroy {
       error: err => console.error(err)
     });
   }
-
-  // Utility methods or handlers
-  private _handleError(message: string, error: any): Observable<never> {
-    this.notifyService.showError(message);
-    return throwError(error);
-  }
-
 }

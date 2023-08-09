@@ -7,9 +7,10 @@
           <form [formGroup]="form" (ngSubmit)="createMachine()">
             <div class="form-group">
               <label for="machineName">Machine Name:</label>
-              <input type="text" id="machineName" formControlName="machineName" class="form-control" required>
-              <div
-                *ngIf="form.get('machineName')?.invalid && (form.get('machineName')?.dirty || form.get('machineName')?.touched)">
+              <input type="text" id="machineName" formControlName="machineName" class="form-control"
+                     [class.is-invalid]="isFieldInvalid('machineName')"
+                     required>
+              <div *ngIf="isFieldInvalid('machineName')">
                 <div *ngIf="form.get('machineName')?.errors?.required">Machine name is required.</div>
               </div>
             </div>

@@ -1,8 +1,8 @@
 import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot} from "@angular/router";
 import {Observable, take} from "rxjs";
-import {NotificationService} from "../service/notification/notification.service";
+import {NotificationService} from "../service/impl/notification/notification.service";
 import {Injectable} from "@angular/core";
-import {AuthService} from "../service/auth/auth.service";
+import {AuthService} from "../service/impl/auth/auth.service";
 import {map} from "rxjs/operators";
 import {AppRoutes} from "../constants";
 

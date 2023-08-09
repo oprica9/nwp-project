@@ -18,6 +18,7 @@ export enum UserPermissions {
   CAN_RESTART_MACHINES = "can_restart_machines",
   CAN_CREATE_MACHINES = "can_create_machines",
   CAN_DESTROY_MACHINES = "can_destroy_machines",
+  CAN_READ_MACHINE_ERRORS = "can_read_machine_errors",
 }
 
 export enum MachineActions {

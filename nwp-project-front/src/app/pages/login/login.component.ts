@@ -1,39 +1,33 @@
-import {Component, OnDestroy} from '@angular/core';
+import {Component} from '@angular/core';
 import {LoginRequest} from "../../model/login-request";
-import {AuthService} from "../../service/auth/auth.service";
+import {AuthService} from "../../service/impl/auth/auth.service";
 import {Router} from "@angular/router";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {Observable, Subject, throwError} from "rxjs";
-import {NotificationService} from "../../service/notification/notification.service";
+import {NotificationService} from "../../service/impl/notification/notification.service";
 import {AppRoutes} from "../../constants";
-import {catchError, takeUntil} from "rxjs/operators";
+import {takeUntil} from "rxjs/operators";
+import {ErrorHandlerService} from "../../errors/service/error-handler.service";
+import {BaseComponent} from "../../base-components/base/base.component";
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnDestroy {
+export class LoginComponent extends BaseComponent {
 
   // Public Fields
   loginForm: FormGroup;
 
-  // Private Fields
-  private ngUnsubscribe = new Subject<void>();
-
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
-    private notifyService: NotificationService,
-    private router: Router
+    private router: Router,
+    protected errorService: ErrorHandlerService,
+    protected notifyService: NotificationService
   ) {
+    super(errorService, notifyService)
     this.loginForm = this._initializeForm();
-  }
-
-  // Lifecycle Hooks
-  ngOnDestroy(): void {
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
   }
 
   // Public Methods
@@ -61,7 +55,7 @@ export class LoginComponent implements OnDestroy {
 
   private _login(request: LoginRequest) {
     this.authService.login(request).pipe(
-      takeUntil(this.ngUnsubscribe)
+      takeUntil(this.unsubscribeSignal$)
     ).subscribe({
       next: _ => {
         this.router.navigate([`/${AppRoutes.HOME}`]).catch(error => {
@@ -70,12 +64,6 @@ export class LoginComponent implements OnDestroy {
       },
       error: err => console.error(err)
     });
-  }
-
-  // Utility methods or handlers
-  private handleError(message: string, error: any): Observable<never> {
-    this.notifyService.showError(message);
-    return throwError(error);
   }
 
 }

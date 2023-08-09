@@ -1,16 +1,17 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {ErrorMessage} from "../../model/model.machine";
-import {MachineService} from "../../service/machine/machine.service";
-import {NotificationService} from "../../service/notification/notification.service";
-import {Observable, Subject, throwError} from "rxjs";
-import {catchError, takeUntil} from "rxjs/operators";
+import {MachineService} from "../../service/impl/machine/machine.service";
+import {NotificationService} from "../../service/impl/notification/notification.service";
+import {takeUntil} from "rxjs/operators";
+import {BaseComponent} from "../../base-components/base/base.component";
+import {ErrorHandlerService} from "../../errors/service/error-handler.service";
 
 @Component({
   selector: 'app-machine-errors',
   templateUrl: './machine-errors.component.html',
   styleUrls: ['./machine-errors.component.css']
 })
-export class MachineErrorsComponent implements OnInit, OnDestroy {
+export class MachineErrorsComponent extends BaseComponent {
 
   // Public Fields
   errors: ErrorMessage[] = [];
@@ -19,44 +20,35 @@ export class MachineErrorsComponent implements OnInit, OnDestroy {
   size: number = 10;
 
   // Private Fields
-  private ngUnsubscribe = new Subject<void>();
 
-  constructor(private machineService: MachineService, private notifyService: NotificationService) {
+  constructor(private machineService: MachineService,
+              protected errorService: ErrorHandlerService,
+              protected notifyService: NotificationService
+  ) {
+    super(errorService, notifyService)
   }
 
   // Lifecycle Hooks
   ngOnInit(): void {
+    super.ngOnInit();
     this.fetchErrors();
-  }
-
-  ngOnDestroy(): void {
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
   }
 
   // Public Methods
   fetchErrors(): void {
     this.machineService.fetchErrors(this.page - 1, this.size).pipe(
-      catchError(this.handleError.bind(this, 'An unknown error occurred.')),
-      takeUntil(this.ngUnsubscribe)
+      takeUntil(this.unsubscribeSignal$)
     ).subscribe({
       next: response => {
         this.errors = response.data.content;
         this.totalErrors = response.data.totalElements;
-      },
-      error: err => console.error(err)
+      }
     });
   }
 
   pageChanged(event: any): void {
     this.page = event;
     this.fetchErrors();
-  }
-
-  // Utility methods or handlers
-  private handleError(message: string, error: any): Observable<never> {
-    this.notifyService.showError(message);
-    return throwError(error);
   }
 
 }

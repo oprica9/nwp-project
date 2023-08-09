@@ -3,7 +3,7 @@ import {Client, Frame, Message} from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
 import {BehaviorSubject, from, Subject} from 'rxjs';
 import {takeUntil} from "rxjs/operators";
-import {environment} from "../../../environments/environment";
+import {environment} from "../../../../environments/environment";
 
 @Injectable({
   providedIn: 'root',

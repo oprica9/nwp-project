@@ -1,38 +1,39 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {Observable, Subject, throwError} from "rxjs";
-import {MachineService} from "../../service/machine/machine.service";
-import {NotificationService} from "../../service/notification/notification.service";
-import {catchError, takeUntil} from "rxjs/operators";
+import {MachineService} from "../../service/impl/machine/machine.service";
+import {NotificationService} from "../../service/impl/notification/notification.service";
+import {takeUntil} from "rxjs/operators";
 import {MachineCreateDTO} from "../../model/dto.machine";
+import {BaseComponent} from "../../base-components/base/base.component";
+import {ErrorHandlerService} from "../../errors/service/error-handler.service";
+import {UserPermissions} from "../../constants";
+import {AuthService} from "../../service/impl/auth/auth.service";
 
 @Component({
   selector: 'app-create-machine',
   templateUrl: './machine-create.component.html',
   styleUrls: ['./machine-create.component.css']
 })
-export class MachineCreateComponent implements OnDestroy {
+export class MachineCreateComponent extends BaseComponent {
 
   // Public Fields
   form: FormGroup;
 
-  // Private Fields
-  private ngUnsubscribe = new Subject<void>();
-
   constructor(private machineService: MachineService,
-              private notifyService: NotificationService,
-              private formBuilder: FormBuilder
+              private authService: AuthService,
+              private formBuilder: FormBuilder,
+              protected errorService: ErrorHandlerService,
+              protected notifyService: NotificationService
   ) {
+    super(errorService, notifyService)
     this.form = this._initializeForm();
   }
 
-  // Lifecycle Hooks
-  ngOnDestroy(): void {
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
+  // Public Methods
+  isFieldInvalid(controlName: string): boolean {
+    return this.isFormControlInvalid(this.form, controlName);
   }
 
-  // Public Methods
   createMachine(): void {
     if (!this.form.valid) {
       this.notifyService.showError('Form is not valid. Please check the inputs.');
@@ -54,21 +55,14 @@ export class MachineCreateComponent implements OnDestroy {
   }
 
   private _createMachine(machine: MachineCreateDTO) {
-    this.machineService.createMachine(machine).pipe(
-      catchError(this._handleError.bind(this, 'Failed to create a machine.')),
-      takeUntil(this.ngUnsubscribe)
-    ).subscribe({
-      next: _ => {
-        this.notifyService.showSuccess('Machine created successfully.');
-      },
-      error: err => console.error(err)
-    })
-  }
-
-  // Utility methods or handlers
-  private _handleError(message: string, error: any): Observable<never> {
-    this.notifyService.showError(message);
-    return throwError(error);
+      this.machineService.createMachine(machine).pipe(
+        takeUntil(this.unsubscribeSignal$)
+      ).subscribe({
+        next: _ => {
+          this.notifyService.showSuccess('Machine created successfully.');
+        },
+        error: err => console.error(err)
+      })
   }
 
 }

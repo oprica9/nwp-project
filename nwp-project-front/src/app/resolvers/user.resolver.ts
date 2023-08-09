@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {Router, Resolve, ActivatedRouteSnapshot} from '@angular/router';
 import {EMPTY, forkJoin, Observable} from 'rxjs';
 import {Permission, User} from "../model/model.user";
-import {UserService} from "../service/user/user.service";
+import {UserService} from "../service/impl/user/user.service";
 import {AppRoutes} from "../constants";
 import {map} from "rxjs/operators";
 

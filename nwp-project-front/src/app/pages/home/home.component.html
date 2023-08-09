@@ -1,6 +1,20 @@
-<div class="container text-center">
+<div class="container text-center" *ngIf="userHasPermissions">
   <h1 class="display-4 mt-5">Welcome to Cloud Simulator!</h1>
   <p class="lead mt-3">Your one-stop platform for simulating cloud services.</p>
-  <p class="mt-5">Explore the functionalities by navigating through the menu. Get started by simulating machine operations, setting permissions, and scheduling tasks.</p>
-  <a routerLink="/machine-search" class="btn btn-primary btn-lg mt-3">Get Started</a>
+  <p class="mt-5">Explore the functionalities by navigating through the menu. Get started by simulating machine
+    operations, setting permissions, and scheduling tasks.</p>
 </div>
+<div class="container d-flex justify-content-center align-items-center mt-5" *ngIf="!userHasPermissions">
+  <div class="text-center">
+    <h1 class="display-4">
+      You are a useless user.
+    </h1>
+    <h1 class="display-4">
+      You have no permissions.
+    </h1>
+    <h1 class="display-4">
+      I would rethink my life choices if I were you.
+    </h1>
+  </div>
+</div>
+

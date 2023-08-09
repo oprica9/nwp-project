@@ -1,56 +1,56 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {Router} from '@angular/router';
-import {UserService} from '../../service/user/user.service';
+import {UserService} from '../../service/impl/user/user.service';
 import {Permission} from '../../model/model.user';
-import {NotificationService} from '../../service/notification/notification.service';
+import {NotificationService} from '../../service/impl/notification/notification.service';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {Observable, Subject, throwError} from 'rxjs';
-import {catchError, takeUntil} from 'rxjs/operators';
-import {AppRoutes} from "../../constants";
+import {takeUntil} from 'rxjs/operators';
+import {AppRoutes, UserPermissions} from "../../constants";
 import {UserCreateDTO} from "../../model/dto.user";
+import {BaseComponent} from "../../base-components/base/base.component";
+import {ErrorHandlerService} from "../../errors/service/error-handler.service";
+import {AuthService} from "../../service/impl/auth/auth.service";
 
 @Component({
   selector: 'app-add-user',
   templateUrl: './add-user.component.html',
   styleUrls: ['./add-user.component.css'],
 })
-export class AddUserComponent implements OnInit, OnDestroy {
+export class AddUserComponent extends BaseComponent {
 
   // Public Fields
   form: FormGroup;
   availablePermissions: Permission[] = [];
 
-  // Private Fields
-  private ngUnsubscribe = new Subject<void>();
-
   constructor(
     private userService: UserService,
+    private authService: AuthService,
     private router: Router,
-    private notifyService: NotificationService,
     private formBuilder: FormBuilder,
+    protected errorService: ErrorHandlerService,
+    protected notifyService: NotificationService
   ) {
+    super(errorService, notifyService)
     this.form = this._initializeForm();
   }
 
   // Lifecycle Hooks
   ngOnInit(): void {
+    super.ngOnInit();
     this._fetchAvailablePermissions();
   }
 
-  ngOnDestroy(): void {
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
+  // Public Methods
+  isFieldInvalid(controlName: string): boolean {
+    return this.isFormControlInvalid(this.form, controlName);
   }
 
-  // Public Methods
   createUser(): void {
     if (!this.form.valid) {
       this.notifyService.showError('Form is not valid. Please check the inputs.');
       return;
     }
-
     const user: UserCreateDTO = this._buildUserCreateDTO();
-
     this._createUser(user);
   }
 
@@ -66,8 +66,7 @@ export class AddUserComponent implements OnInit, OnDestroy {
 
   private _fetchAvailablePermissions(): void {
     this.userService.getAvailablePermissions().pipe(
-      catchError(this._handleError.bind(this, "Failed to fetch available permissions.")),
-      takeUntil(this.ngUnsubscribe)
+      takeUntil(this.unsubscribeSignal$)
     ).subscribe({
       next: next => {
         this.availablePermissions = next.data;
@@ -98,8 +97,7 @@ export class AddUserComponent implements OnInit, OnDestroy {
   private _createUser(user: UserCreateDTO) {
     this.userService.createUser(user)
       .pipe(
-        catchError(this._handleError.bind(this, "Failed to create user.")),
-        takeUntil(this.ngUnsubscribe)
+        takeUntil(this.unsubscribeSignal$)
       ).subscribe({
       next: next => {
         this.notifyService.showSuccess(`User ${next.data.firstName} ${next.data.lastName} created successfully.`);
@@ -108,12 +106,5 @@ export class AddUserComponent implements OnInit, OnDestroy {
       error: err => console.log(err)
     });
   }
-
-  // Utility methods or handlers
-  private _handleError(message: string, error: any): Observable<never> {
-    this.notifyService.showError(message);
-    return throwError(error);
-  }
-
 
 }

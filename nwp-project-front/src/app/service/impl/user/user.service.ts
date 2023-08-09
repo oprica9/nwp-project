@@ -1,12 +1,11 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {Permission, User} from '../../model/model.user';
-import {ApiEndpoints} from '../../constants';
-import {ApiResponse} from "../../model/api-response";
-import {Page} from "../../model/page";
-import {UserCreateDTO, UserUpdateDTO} from "../../model/dto.user";
-import {Machine} from "../../model/model.machine";
+import {Permission, User} from '../../../model/model.user';
+import {ApiEndpoints} from '../../../constants';
+import {ApiResponse} from "../../../model/api-response";
+import {Page} from "../../../model/page";
+import {UserCreateDTO, UserUpdateDTO} from "../../../model/dto.user";
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +20,7 @@ export class UserService {
       .set('page', page.toString())
       .set('size', size.toString());
 
-    return this.http.get<ApiResponse<Page<User>>>(`${ApiEndpoints.USERS}`, {params});
+    return this.http.get<ApiResponse<Page<User>>>(`${ApiEndpoints.USERS}`, {params})
   }
 
   getUserById(id: number): Observable<ApiResponse<User>> {

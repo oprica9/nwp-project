@@ -1,23 +1,26 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {FormBuilder, FormGroup} from '@angular/forms';
-import {MachineService} from "../../service/machine/machine.service";
+import {MachineService} from "../../service/impl/machine/machine.service";
 import {Machine} from "../../model/model.machine";
-import {NotificationService} from "../../service/notification/notification.service";
+import {NotificationService} from "../../service/impl/notification/notification.service";
 import {SearchParams} from '../../model/model.machine';
-import {catchError, takeUntil} from "rxjs/operators";
-import {Observable, Subject, throwError} from 'rxjs';
-import {WebsocketService} from "../../service/websocket/websocket.service";
-import {AuthService} from "../../service/auth/auth.service";
+import {takeUntil} from "rxjs/operators";
+import {Observable} from 'rxjs';
+import {WebsocketService} from "../../service/impl/websocket/websocket.service";
 import {MachineActions, MachineStates, UserPermissions} from "../../constants";
+import {BaseComponent} from "../../base-components/base/base.component";
+import {ErrorHandlerService} from "../../errors/service/error-handler.service";
+import {AuthService} from "../../service/impl/auth/auth.service";
 
 @Component({
   selector: 'app-machine-search',
   templateUrl: './machine-search.component.html',
   styleUrls: ['./machine-search.component.css']
 })
-export class MachineSearchComponent implements OnInit, OnDestroy {
+export class MachineSearchComponent extends BaseComponent {
 
   // Public Fields
+  UserPermissions = UserPermissions;
   form: FormGroup;
   machines: Machine[] = [];
   availableStatuses: string[] = [];
@@ -27,7 +30,6 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
   MachineActions = MachineActions;
 
   // Private Fields
-  private ngUnsubscribe = new Subject<void>();
   private actionMap: { [key in MachineActions]: MachineStates } = {
     [MachineActions.START]: MachineStates.STOPPED,
     [MachineActions.STOP]: MachineStates.RUNNING,
@@ -38,20 +40,23 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
   constructor(
     private formBuilder: FormBuilder,
     private machineService: MachineService,
-    private notifyService: NotificationService,
+    private authService: AuthService,
     private websocketService: WebsocketService,
-    private authService: AuthService
+    protected errorService: ErrorHandlerService,
+    protected notifyService: NotificationService
   ) {
+    super(errorService, notifyService);
     this.form = this._initializeForm();
   }
 
   // Lifecycle Hooks
   ngOnInit(): void {
+    super.ngOnInit();
+
     this.websocketService.connect();
 
     this.websocketService.messages.pipe(
-      catchError(this._handleError.bind(this, 'An unknown error occurred.')),
-      takeUntil(this.ngUnsubscribe)
+      takeUntil(this.unsubscribeSignal$)
     ).subscribe({
       next: response => {
         if (response) {
@@ -71,15 +76,19 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    super.ngOnDestroy();
     this.websocketService.disconnect()
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
   }
 
   // Public Methods
   searchMachines(): void {
     const searchParams: Partial<SearchParams> = this._buildSearchParams();
     this._executeMachineSearch(searchParams);
+  }
+
+  userHasPermission(permission: string): boolean {
+    console.log("check");
+    return this.authService.userHasPermission(permission);
   }
 
   pageChanged(event: any): void {
@@ -90,7 +99,6 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
   // Event Handlers
   startMachine(machineId: number) {
     this._executeMachineAction(
-      UserPermissions.CAN_START_MACHINES,
       'Machine is starting.',
       () => this.machineService.startMachine(machineId)
     );
@@ -98,7 +106,6 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
 
   restartMachine(machineId: number) {
     this._executeMachineAction(
-      UserPermissions.CAN_RESTART_MACHINES,
       'Machine is restarting.',
       () => this.machineService.restartMachine(machineId)
     );
@@ -106,7 +113,6 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
 
   stopMachine(machineId: number) {
     this._executeMachineAction(
-      UserPermissions.CAN_STOP_MACHINES,
       'Machine is stopping.',
       () => this.machineService.stopMachine(machineId)
     );
@@ -114,7 +120,6 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
 
   destroyMachine(machineId: number) {
     this._executeMachineAction(
-      UserPermissions.CAN_DESTROY_MACHINES,
       'Machine successfully destroyed.',
       () => this.machineService.destroyMachine(machineId)
     );
@@ -134,8 +139,7 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
 
   private _executeMachineSearch(params: SearchParams): void {
     this.machineService.searchMachines(params).pipe(
-      catchError(this._handleError.bind(this, 'An unknown error occurred.')),
-      takeUntil(this.ngUnsubscribe)
+      takeUntil(this.unsubscribeSignal$)
     ).subscribe({
       next: response => {
         this.machines = response.data.content;
@@ -146,19 +150,10 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
     });
   }
 
-  private _executeMachineAction(requiredPermission: UserPermissions, successMessage: string, action: () => Observable<any>) {
-    if (!this.authService.isAuthenticated()) {
-      this.notifyService.showError('User is not authenticated.');
-      return;
-    }
-    if (!this.authService.userHasPermission(requiredPermission)) {
-      this.notifyService.showError(`You do not have permission to perform this action on machines.`);
-      return;
-    }
+  private _executeMachineAction(successMessage: string, action: () => Observable<any>) {
     action()
       .pipe(
-        catchError(this._handleError.bind(this, 'Failed to perform the action on the machine.')),
-        takeUntil(this.ngUnsubscribe))
+        takeUntil(this.unsubscribeSignal$))
       .subscribe({
         next: _ => {
           this.notifyService.showSuccess(successMessage);
@@ -171,8 +166,7 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
   private _fetchAvailableStatuses(): void {
     this.machineService.getAvailableStatuses()
       .pipe(
-        catchError(this._handleError.bind(this, 'Failed to fetch available statuses.')),
-        takeUntil(this.ngUnsubscribe))
+        takeUntil(this.unsubscribeSignal$))
       .subscribe({
         next: next => {
           this.availableStatuses = next.data;
@@ -225,11 +219,4 @@ export class MachineSearchComponent implements OnInit, OnDestroy {
       machine.actionPermissions[action as MachineActions] = this.actionMap[action as MachineActions] === machine.status;
     }
   }
-
-  // Utility methods or handlers
-  private _handleError(message: string, error: any): Observable<never> {
-    this.notifyService.showError(message);
-    return throwError(error);
-  }
-
 }

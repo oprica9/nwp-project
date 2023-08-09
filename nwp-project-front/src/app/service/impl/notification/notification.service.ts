@@ -17,11 +17,4 @@ export class NotificationService {
     this.toastr.success(message, 'Success');
   }
 
-  showInfo(message: string): void {
-    this.toastr.info(message, 'Info');
-  }
-
-  showWarning(message: string): void {
-    this.toastr.warning(message, 'Warning');
-  }
 }

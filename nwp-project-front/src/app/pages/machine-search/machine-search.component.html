@@ -64,21 +64,25 @@
           <td>{{machine.active}}</td>
           <td *ngIf="machine.active">
             <button class="btn btn-success me-2"
+                    *ngIf="userHasPermission(UserPermissions.CAN_START_MACHINES)"
                     [disabled]="!machine.actionPermissions?.[MachineActions.START]"
                     (click)="$event.stopPropagation(); startMachine(machine.id)">
               Start
             </button>
             <button class="btn btn-success me-2"
+                    *ngIf="userHasPermission(UserPermissions.CAN_STOP_MACHINES)"
                     [disabled]="!machine.actionPermissions?.[MachineActions.STOP]"
                     (click)="$event.stopPropagation(); stopMachine(machine.id)">
               Stop
             </button>
             <button class="btn btn-success me-2"
+                    *ngIf="userHasPermission(UserPermissions.CAN_RESTART_MACHINES)"
                     [disabled]="!machine.actionPermissions?.[MachineActions.RESTART]"
                     (click)="$event.stopPropagation(); restartMachine(machine.id)">
               Restart
             </button>
             <button class="btn btn-danger me-2"
+                    *ngIf="userHasPermission(UserPermissions.CAN_DESTROY_MACHINES)"
                     [disabled]="!machine.actionPermissions?.[MachineActions.DESTROY]"
                     (click)="$event.stopPropagation(); destroyMachine(machine.id)">
               Destroy
