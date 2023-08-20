@@ -179,6 +179,7 @@ public class MachineServiceImpl implements MachineService {
 
     @Override
     public void scheduleStartMachine(Long machineId, LocalDateTime scheduledDateTime) {
+        machineExists(machineId);
         taskScheduler.schedule(() -> {
             try {
                 startMachine(machineId);
@@ -190,6 +191,7 @@ public class MachineServiceImpl implements MachineService {
 
     @Override
     public void scheduleStopMachine(Long machineId, LocalDateTime scheduledDateTime) {
+        machineExists(machineId);
         taskScheduler.schedule(() -> {
             try {
                 stopMachine(machineId);
@@ -201,6 +203,7 @@ public class MachineServiceImpl implements MachineService {
 
     @Override
     public void scheduleRestartMachine(Long machineId, LocalDateTime scheduledDateTime) {
+        machineExists(machineId);
         taskScheduler.schedule(() -> {
             try {
                 restartMachine(machineId);
@@ -226,6 +229,12 @@ public class MachineServiceImpl implements MachineService {
                 .orElseThrow(() -> exceptionUtils.createResourceNotFoundException("Machine", "id", machineId.toString()));
     }
 
+    private void machineExists(Long machineId) {
+        if (!machineRepository.existsById(machineId)) {
+            throw exceptionUtils.createResourceNotFoundException("Machine", "id", machineId.toString());
+        }
+    }
+
     private void checkMachineAvailability(Machine machine, MachineStatus requiredStatus) {
         if (machine.getScheduledStatus() != null && machine.getScheduledStatus() != requiredStatus) {
             throw exceptionUtils.createMachineException(machine.getScheduledStatus().name());
@@ -234,7 +243,7 @@ public class MachineServiceImpl implements MachineService {
             throw exceptionUtils.createMachineException(machine.getStatus().name(), requiredStatus.name());
         }
 
-        if(!machine.getActive()){
+        if (!machine.getActive()) {
             throw exceptionUtils.createMachineActivityException();
         }
     }
