@@ -1,6 +1,5 @@
 import {Component, OnInit} from '@angular/core';
 import {AuthService} from "../../service/impl/auth/auth.service";
-import {AppRoutes, UserPermissions} from "../../constants";
 import {Router} from "@angular/router";
 
 @Component({
@@ -17,14 +16,9 @@ export class HomeComponent implements OnInit {
 
   // Lifecycle Hooks
   ngOnInit(): void {
-    if(this.authService.userHasAnyPermission()){
+    if (this.authService.userHasAnyPermission()) {
       this.userHasPermissions = true;
     }
   }
 
-  // Public Methods
-  logout() {
-    this.authService.logout();
-    this.router.navigate([`/${AppRoutes.LOGIN}`]).then();
-  }
 }

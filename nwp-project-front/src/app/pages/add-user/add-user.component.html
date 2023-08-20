@@ -56,7 +56,7 @@
               </div>
             </div>
 
-            <!-- Display the available permissions as checkboxes -->
+            <!-- Available permissions as checkboxes -->
             <div class="form-group mt-2">
               <label>Permissions:</label>
               <div *ngFor="let permission of availablePermissions" class="form-check">
@@ -69,6 +69,7 @@
             <div class="form-group">
               <button type="submit" class="btn btn-primary mt-3" [disabled]="form.invalid">Save Changes</button>
             </div>
+
           </form>
         </div>
       </div>

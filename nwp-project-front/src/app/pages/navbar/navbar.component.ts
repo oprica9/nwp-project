@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {AuthService} from "../../service/impl/auth/auth.service";
 import {Router} from "@angular/router";
 import {AppRoutes, UserPermissions} from "../../constants";

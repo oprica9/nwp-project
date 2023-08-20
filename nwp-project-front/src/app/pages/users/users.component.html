@@ -1,7 +1,6 @@
 <div class="container mt-5">
   <div class="table-responsive">
     <table class="table table-hover">
-      <!-- Table headers remain the same -->
       <thead>
       <tr>
         <th>First Name</th>
@@ -12,7 +11,6 @@
       </tr>
       </thead>
       <tbody>
-      <!-- Table rows remain the same -->
       <tr
         *ngFor="let user of users | paginate: { id: 'users', itemsPerPage: size, currentPage: page, totalItems: totalUsers }"
         [ngClass]="{'clickable-row': userHasPermission(UserPermissions.CAN_UPDATE_USERS)}"
@@ -43,6 +41,5 @@
       </tbody>
     </table>
   </div>
-  <!-- Pagination controls are placed outside the table-responsive container -->
   <pagination-controls id="users" (pageChange)="pageChanged($event)"></pagination-controls>
 </div>

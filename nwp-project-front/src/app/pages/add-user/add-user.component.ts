@@ -5,7 +5,7 @@ import {Permission} from '../../model/model.user';
 import {NotificationService} from '../../service/impl/notification/notification.service';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {takeUntil} from 'rxjs/operators';
-import {AppRoutes, UserPermissions} from "../../constants";
+import {AppRoutes} from "../../constants";
 import {UserCreateDTO} from "../../model/dto.user";
 import {BaseComponent} from "../../base-components/base/base.component";
 import {ErrorHandlerService} from "../../errors/service/error-handler.service";

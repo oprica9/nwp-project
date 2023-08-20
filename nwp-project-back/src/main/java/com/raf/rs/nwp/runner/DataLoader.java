@@ -1,10 +1,8 @@
 package com.raf.rs.nwp.runner;
 
-import com.raf.rs.nwp.model.Machine;
 import com.raf.rs.nwp.model.Permission;
 import com.raf.rs.nwp.model.User;
 import com.raf.rs.nwp.model.UserPermission;
-import com.raf.rs.nwp.model.enums.MachineStatus;
 import com.raf.rs.nwp.repository.MachineRepository;
 import com.raf.rs.nwp.repository.PermissionRepository;
 import com.raf.rs.nwp.repository.UserPermissionRepository;

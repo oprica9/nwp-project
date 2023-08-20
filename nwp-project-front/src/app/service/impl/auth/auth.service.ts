@@ -15,7 +15,7 @@ import {ApiErrorResponse} from "../../../model/api-error-response";
   providedIn: 'root'
 })
 export class AuthService {
-  private currentUserSubject: BehaviorSubject<AuthUser | null> = new BehaviorSubject<AuthUser | null>(this.getDecodedToken());
+  private currentUserSubject: BehaviorSubject<AuthUser | null> = new BehaviorSubject<AuthUser | null>(this._getDecodedToken());
 
   constructor(
     private http: HttpClient,
@@ -28,16 +28,13 @@ export class AuthService {
     return this.currentUserSubject.asObservable();
   }
 
-  /**
-   * Attempt to authenticate the user.
-   * @param request The login request containing user credentials.
-   */
+  // Public Methods
   login(request: LoginRequest): Observable<ApiResponse<AuthenticationResponseDTO>> {
     return this.http.post<ApiResponse<AuthenticationResponseDTO>>(`${ApiEndpoints.AUTH}`, request)
       .pipe(
         map(authResponse => {
           this.tokenService.saveToken(authResponse.data.jwt);
-          this.setCurrentUser(authResponse.data.jwt);
+          this._setCurrentUser(authResponse.data.jwt);
           return authResponse;
         }),
         catchError((error: HttpErrorResponse) => {
@@ -60,25 +57,15 @@ export class AuthService {
       );
   }
 
-  /**
-   * Logs the user out.
-   */
   logout(): void {
     this.tokenService.removeToken();
     this.currentUserSubject.next(null);
   }
 
-  /**
-   * Checks if the user is authenticated.
-   */
   isAuthenticated(): boolean {
     return this.currentUserSubject.value !== null;
   }
 
-  /**
-   * Checks if the user has the specified permission.
-   * @param permission The permission to check.
-   */
   userHasPermission(permission: string): boolean {
     const currentUser = this.currentUserSubject.value;
     return currentUser?.permissions.includes(permission) || false;
@@ -95,17 +82,17 @@ export class AuthService {
   }
 
   // Private Methods
-  private setCurrentUser(jwt: string): void {
-    this.currentUserSubject.next(this.decodeToken(jwt));
+  private _setCurrentUser(jwt: string): void {
+    this.currentUserSubject.next(this._decodeToken(jwt));
   }
 
-  private decodeToken(token: string): AuthUser {
+  private _decodeToken(token: string): AuthUser {
     return jwt_decode(token);
   }
 
-  private getDecodedToken(): AuthUser | null {
+  private _getDecodedToken(): AuthUser | null {
     const jwt = this.tokenService.getToken();
-    return jwt ? this.decodeToken(jwt) : null;
+    return jwt ? this._decodeToken(jwt) : null;
   }
 
 }

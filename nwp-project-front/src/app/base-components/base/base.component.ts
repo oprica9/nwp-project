@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {filter, Observable, Subject, tap, throwError} from "rxjs";
+import {filter, Observable, Subject} from "rxjs";
 import {takeUntil} from "rxjs/operators";
 import {ErrorHandlerService} from "../../errors/service/error-handler.service";
 import {NotificationService} from "../../service/impl/notification/notification.service";

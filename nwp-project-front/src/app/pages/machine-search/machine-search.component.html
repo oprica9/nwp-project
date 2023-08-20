@@ -38,11 +38,9 @@
     </div>
   </div>
 
-
   <div class="container mt-5">
     <div class="table-responsive">
       <table class="table table-hover">
-        <!-- Table headers remain the same -->
         <thead>
         <tr>
           <th>Name</th>
@@ -54,7 +52,6 @@
         </tr>
         </thead>
         <tbody>
-        <!-- Table rows remain the same -->
         <tr
           *ngFor="let machine of machines | paginate: { id: 'machines', itemsPerPage: size, currentPage: page, totalItems: totalMachines }"
         >
@@ -92,7 +89,6 @@
         </tbody>
       </table>
     </div>
-    <!-- Pagination controls are placed outside the table-responsive container -->
     <pagination-controls id="machines" (pageChange)="pageChanged($event)"></pagination-controls>
   </div>
 </div>

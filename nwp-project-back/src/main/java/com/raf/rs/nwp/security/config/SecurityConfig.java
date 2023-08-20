@@ -83,6 +83,7 @@ public class SecurityConfig {
 
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
+        // Custom filters
         http
                 .addFilterBefore(new ExceptionHandlingFilter(objectMapper), JWTAuthenticationFilter.class)
                 .addFilterBefore(new JWTAuthenticationFilter(jwtUtils, authenticationManager, objectMapper), UsernamePasswordAuthenticationFilter.class)

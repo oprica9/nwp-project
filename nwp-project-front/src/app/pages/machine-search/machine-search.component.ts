@@ -52,9 +52,7 @@ export class MachineSearchComponent extends BaseComponent {
   // Lifecycle Hooks
   ngOnInit(): void {
     super.ngOnInit();
-
     this.websocketService.connect();
-
     this.websocketService.messages.pipe(
       takeUntil(this.unsubscribeSignal$)
     ).subscribe({

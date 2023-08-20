@@ -19,8 +19,6 @@ export class MachineErrorsComponent extends BaseComponent {
   page: number = 1;
   size: number = 10;
 
-  // Private Fields
-
   constructor(private machineService: MachineService,
               protected errorService: ErrorHandlerService,
               protected notifyService: NotificationService

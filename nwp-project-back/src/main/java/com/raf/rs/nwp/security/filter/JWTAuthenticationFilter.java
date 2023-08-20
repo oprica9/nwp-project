@@ -54,7 +54,6 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain, Authentication auth) throws IOException {
         String token = jwtUtils.generateJwtToken(auth);
 
-        // Put JWT token in the response
         AuthenticationResponseDTO responseDTO = new AuthenticationResponseDTO(token);
         ApiResponse<AuthenticationResponseDTO> response = new ApiResponse<>(ZonedDateTime.now(), "success", responseDTO);
         String responseBody = objectMapper.writeValueAsString(response);

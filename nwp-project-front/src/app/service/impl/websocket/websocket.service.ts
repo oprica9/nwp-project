@@ -1,18 +1,16 @@
-import {Injectable, OnDestroy} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Client, Frame, Message} from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
-import {BehaviorSubject, from, Subject} from 'rxjs';
-import {takeUntil} from "rxjs/operators";
+import {BehaviorSubject, Subject} from 'rxjs';
 import {environment} from "../../../../environments/environment";
 
 @Injectable({
   providedIn: 'root',
 })
-export class WebsocketService implements OnDestroy {
+export class WebsocketService {
   private client: Client;
   public messages: BehaviorSubject<any> = new BehaviorSubject(null);
   private connectionErrors = new Subject<Error | CloseEvent>();
-  private ngUnsubscribe = new Subject<void>();
 
   constructor() {
     this.client = new Client({
@@ -45,22 +43,10 @@ export class WebsocketService implements OnDestroy {
   }
 
   public disconnect(): void {
-    from(this.client.deactivate())
-      .pipe(takeUntil(this.ngUnsubscribe))
-      .subscribe();
+    this.client.deactivate()
+      .catch(error => {
+        console.error('Error disconnecting from WebSocket:', error);
+      });
   }
 
-  public sendMessage(destination: string, body: any): void {
-    this.client.publish({destination, body: JSON.stringify(body)});
-  }
-
-  public getErrors() {
-    return this.connectionErrors.asObservable();
-  }
-
-  ngOnDestroy() {
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
-    this.disconnect();
-  }
 }

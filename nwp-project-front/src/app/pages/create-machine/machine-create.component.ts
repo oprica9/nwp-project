@@ -6,7 +6,6 @@ import {takeUntil} from "rxjs/operators";
 import {MachineCreateDTO} from "../../model/dto.machine";
 import {BaseComponent} from "../../base-components/base/base.component";
 import {ErrorHandlerService} from "../../errors/service/error-handler.service";
-import {UserPermissions} from "../../constants";
 import {AuthService} from "../../service/impl/auth/auth.service";
 
 @Component({

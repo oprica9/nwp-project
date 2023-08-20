@@ -3,7 +3,6 @@ package com.raf.rs.nwp.exception.utils;
 import com.raf.rs.nwp.exception.exceptions.MachineException;
 import com.raf.rs.nwp.exception.exceptions.ResourceAlreadyExistsException;
 import com.raf.rs.nwp.exception.exceptions.ResourceNotFoundException;
-import com.raf.rs.nwp.model.enums.MachineStatus;
 import lombok.AllArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;

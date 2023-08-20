@@ -3,7 +3,6 @@ package com.raf.rs.nwp.mapper;
 import com.raf.rs.nwp.dto.permission.PermissionDTO;
 import com.raf.rs.nwp.dto.user.UserDTO;
 import com.raf.rs.nwp.model.User;
-import com.raf.rs.nwp.model.UserPermission;
 import com.raf.rs.nwp.security.dto.UserAuthDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
